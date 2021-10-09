@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-// Import HolisticBarracuda
 using MediaPipe.Holistic;
 
 public class Visuallizer : MonoBehaviour
@@ -18,9 +17,10 @@ public class Visuallizer : MonoBehaviour
     // Set "Packages/HolisticBarracuda/ResourceSet/Holistic.asset" on the Unity Editor.
     [SerializeField] HolisticResource holisticResource;
     // Select inference type with pull down on the Unity Editor.
-    [SerializeField] HolisticInferenceType holisticInferenceType = HolisticInferenceType.full;
+    [SerializeField] HolisticMocapType holisticMocapType = HolisticMocapType.full;
+    [SerializeField] Animator avatarAnimator;
 
-    HolisticPipeline holisticPipeline;
+    HolisticMotionCapture motionCapture;
     Material poseMaterial;
     Material faceMeshMaterial;
     Material handMaterial;
@@ -41,8 +41,7 @@ public class Visuallizer : MonoBehaviour
 
     void Start()
     {
-        // Make instance of HolisticPipeline
-        holisticPipeline = new HolisticPipeline(holisticResource);
+        motionCapture = new HolisticMotionCapture(holisticResource);
 
         poseMaterial = new Material(poseShader);
         faceMeshMaterial = new Material(faceShader);
@@ -52,23 +51,22 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        // Inference. Switchable inference type anytime.
-        holisticPipeline.ProcessImage(webCamInput.inputImageTexture, holisticInferenceType);
+        motionCapture.AvatarPoseRender(avatarAnimator, webCamInput.inputImageTexture, holisticMocapType);
     }
 
     void OnRenderObject(){
-        if(holisticInferenceType != HolisticInferenceType.face_only) PoseRender();
-        if(holisticInferenceType == HolisticInferenceType.pose_only) return;
+        if(holisticMocapType != HolisticMocapType.face_only) PoseRender();
+        if(holisticMocapType == HolisticMocapType.pose_only) return;
 
-        if( holisticInferenceType == HolisticInferenceType.full || 
-            holisticInferenceType == HolisticInferenceType.pose_and_face || 
-            holisticInferenceType == HolisticInferenceType.face_only)
+        if( holisticMocapType == HolisticMocapType.full || 
+            holisticMocapType == HolisticMocapType.pose_and_face || 
+            holisticMocapType == HolisticMocapType.face_only)
         {
             FaceRender();
         }
 
-        if( holisticInferenceType == HolisticInferenceType.full || 
-            holisticInferenceType == HolisticInferenceType.pose_and_hand)
+        if( holisticMocapType == HolisticMocapType.full || 
+            holisticMocapType == HolisticMocapType.pose_and_hand)
         {
             HandRender(false);
             HandRender(true);
@@ -80,9 +78,9 @@ public class Visuallizer : MonoBehaviour
         var h = image.rectTransform.rect.height;
 
         // Set inferenced pose landmark results.
-        poseMaterial.SetBuffer("_vertices", holisticPipeline.poseLandmarkBuffer);
+        poseMaterial.SetBuffer("_vertices", motionCapture.poseLandmarkBuffer);
         // Set pose landmark counts.
-        poseMaterial.SetInt("_keypointCount", holisticPipeline.poseVertexCount);
+        poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
         poseMaterial.SetFloat("_humanExistThreshold", humanExistThreshold);
         poseMaterial.SetVector("_uiScale", new Vector2(w, h));
         poseMaterial.SetVectorArray("_linePair", linePair);
@@ -93,7 +91,26 @@ public class Visuallizer : MonoBehaviour
 
         // Draw 33 landmark points.
         poseMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, holisticPipeline.poseVertexCount);
+        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
+
+
+        // 3D rendering
+
+        // Set predicted pose world landmark results.
+        poseMaterial.SetBuffer("_worldVertices", motionCapture.poseLandmarkWorldBuffer);
+        // Set pose landmark counts.
+        poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
+        poseMaterial.SetFloat("_humanExistThreshold", humanExistThreshold);
+        poseMaterial.SetVectorArray("_linePair", linePair);
+        poseMaterial.SetMatrix("_invViewMatrix", cam.worldToCameraMatrix.inverse);
+
+        // Draw 35 world body topology lines.
+        poseMaterial.SetPass(2);
+        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, BODY_LINE_NUM);
+
+        // Draw 33 world landmark points.
+        poseMaterial.SetPass(3);
+        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
     }
 
     void FaceRender(){
@@ -103,20 +120,20 @@ public class Visuallizer : MonoBehaviour
 
         // FaceMesh
         // Set inferenced face landmark results.
-        faceMeshMaterial.SetBuffer("_vertices", holisticPipeline.faceVertexBuffer);
+        faceMeshMaterial.SetBuffer("_vertices", motionCapture.faceVertexBuffer);
         faceMeshMaterial.SetPass(0);
         Graphics.DrawMeshNow(faceLineTemplateMesh, Vector3.zero, Quaternion.identity);
 
         // Left eye
         // Set inferenced eye landmark results.
-        faceMeshMaterial.SetBuffer("_vertices", holisticPipeline.leftEyeVertexBuffer);
+        faceMeshMaterial.SetBuffer("_vertices", motionCapture.leftEyeVertexBuffer);
         faceMeshMaterial.SetVector("_eyeColor", Color.yellow);
         faceMeshMaterial.SetPass(1);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
         // Right eye
         // Set inferenced eye landmark results.
-        faceMeshMaterial.SetBuffer("_vertices", holisticPipeline.rightEyeVertexBuffer);
+        faceMeshMaterial.SetBuffer("_vertices", motionCapture.rightEyeVertexBuffer);
         faceMeshMaterial.SetVector("_eyeColor", Color.cyan);
         faceMeshMaterial.SetPass(1);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
@@ -129,11 +146,11 @@ public class Visuallizer : MonoBehaviour
         handMaterial.SetVector("_pointColor", isRight ? Color.cyan : Color.yellow);
         handMaterial.SetFloat("_handScoreThreshold", handScoreThreshold);
         // Set inferenced hand landmark results.
-        handMaterial.SetBuffer("_vertices", isRight ? holisticPipeline.rightHandVertexBuffer : holisticPipeline.leftHandVertexBuffer);
+        handMaterial.SetBuffer("_vertices", isRight ? motionCapture.rightHandVertexBuffer : motionCapture.leftHandVertexBuffer);
 
         // Draw 21 key point circles.
         handMaterial.SetPass(0);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 96, holisticPipeline.handVertexCount);
+        Graphics.DrawProceduralNow(MeshTopology.Triangles, 96, motionCapture.handVertexCount);
 
         // Draw skeleton lines.
         handMaterial.SetPass(1);
@@ -142,6 +159,6 @@ public class Visuallizer : MonoBehaviour
 
     void OnDestroy(){
         // Must call Dispose method when no longer in use.
-        holisticPipeline.Dispose();
+        motionCapture.Dispose();
     }
 }

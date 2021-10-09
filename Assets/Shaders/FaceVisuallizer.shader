@@ -1,4 +1,4 @@
-Shader "Hidden/HolisticBarracuda/FaceVisualizer"
+Shader "Hidden/HolisticMotionCapture/FaceVisualizer"
 {
     CGINCLUDE
 

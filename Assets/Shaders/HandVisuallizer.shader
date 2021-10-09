@@ -1,4 +1,4 @@
-Shader "Hidden/HolisticBarracuda/HandVisuallizer"
+Shader "Hidden/HolisticMotionCapture/HandVisuallizer"
 {
     CGINCLUDE
 

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -481,7 +481,7 @@ MonoBehaviour:
   handShader: {fileID: 4800000, guid: 1c45c99fd2605fb48b7636b731714bf1, type: 3}
   handScoreThreshold: 0.5
   holisticResource: {fileID: 11400000, guid: 3d7456c7320edba4caea63df7db64fb7, type: 2}
-  holisticMocapType: 0
+  holisticMocapType: 3
   avatarAnimator: {fileID: 413382256}
 --- !u!114 &1587756040
 MonoBehaviour:
@@ -555,6 +555,10 @@ PrefabInstance:
     - target: {fileID: 2129563396581252013, guid: d7006cb8846bd8444923e408e295fdaa, type: 3}
       propertyPath: m_Name
       value: SampleAvatar
+      objectReference: {fileID: 0}
+    - target: {fileID: 2129563396581252013, guid: d7006cb8846bd8444923e408e295fdaa, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8279925789973130781, guid: d7006cb8846bd8444923e408e295fdaa, type: 3}
       propertyPath: m_RootOrder

@@ -41,7 +41,7 @@ public class Visuallizer : MonoBehaviour
 
     void Start()
     {
-        motionCapture = new HolisticMotionCapture(holisticResource);
+        motionCapture = new HolisticMotionCapture(avatarAnimator, holisticResource);
 
         poseMaterial = new Material(poseShader);
         faceMeshMaterial = new Material(faceShader);
@@ -51,7 +51,7 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(avatarAnimator, webCamInput.inputImageTexture, holisticMocapType);
+        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, holisticMocapType);
     }
 
     void OnRenderObject(){
@@ -93,7 +93,7 @@ public class Visuallizer : MonoBehaviour
         poseMaterial.SetPass(1);
         Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
 
-
+        
         // 3D rendering
 
         // Set predicted pose world landmark results.

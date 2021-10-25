@@ -21,9 +21,9 @@ public class HolisticMotionCapture : System.IDisposable
     HolisticPipeline holisticPipeline;
     HolisticAvatarController avatarController;
 
-    public HolisticMotionCapture(HolisticResource holisticResource, BlazePoseModel blazePoseModel = BlazePoseModel.full){
+    public HolisticMotionCapture(Animator avatarAnimator, HolisticResource holisticResource, BlazePoseModel blazePoseModel = BlazePoseModel.full){
         holisticPipeline = new HolisticPipeline(holisticResource, blazePoseModel);
-        avatarController = new HolisticAvatarController();
+        avatarController = new HolisticAvatarController(avatarAnimator);
     }
 
     public void Dispose(){
@@ -31,7 +31,6 @@ public class HolisticMotionCapture : System.IDisposable
     }
 
     public void AvatarPoseRender(
-        Animator avatarAnimator,
         Texture inputTexture, 
         HolisticMocapType mocapType = HolisticMocapType.full,
         BlazePoseModel blazePoseModel = BlazePoseModel.full,
@@ -39,6 +38,6 @@ public class HolisticMotionCapture : System.IDisposable
         float poseDetectionIouThreshold = 0.3f)
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-        avatarController.PoseRender(avatarAnimator, holisticPipeline.poseLandmarkWorldBuffer);
+        avatarController.PoseRender(holisticPipeline.poseLandmarkWorldBuffer);
     }
 }

@@ -8,6 +8,7 @@ public class HolisticAvatarController
     Animator avatar;
     Dictionary<HumanBodyBones, Joint> poseJoints;
     bool isUpperBodyOnly;
+    float spineRotPercentage = 0.6f;
     #endregion
 
     #region constant variables
@@ -110,6 +111,7 @@ public class HolisticAvatarController
         }
         
         poseJoints[HumanBodyBones.Hips].inverseRotation = Quaternion.Inverse(Quaternion.LookRotation(forward));
+        poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
     public void PoseRender(ComputeBuffer poseWorldBuffer, float scoreThreshold, bool isUpperBodyOnly){
@@ -180,6 +182,26 @@ public class HolisticAvatarController
             var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
             var boneTrans = avatar.GetBoneTransform(bone);
             boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, rot, score);
+        }
+
+        // Rotate head with pose landmark.
+        var leftEyeLandmark = poseLandmarks[2];
+        var rightEyeLandmark = poseLandmarks[5];
+        var leftMouthLandmark = poseLandmarks[9];
+        var rightMouthLandmark = poseLandmarks[10];
+        var eyeMid = (leftEyeLandmark + rightEyeLandmark) * 0.5f;
+        var mouthMid = (leftMouthLandmark + rightMouthLandmark) * 0.5f;
+        var headScore = (eyeMid.w + mouthMid.w) * 0.5f;
+        var headForward = Vector3.Cross(eyeMid - mouthMid, leftMouthLandmark - rightMouthLandmark);
+        if(headScore > scoreThreshold){
+            var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation *  poseJoints[HumanBodyBones.Head].initRotation;
+            if(isUpperBodyOnly){
+                var hipRotation = Quaternion.Lerp(poseJoints[HumanBodyBones.Spine].initRotation, headRotation, spineRotPercentage);
+                var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
+                hipTransform.rotation = hipRotation;
+            }
+            var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
+            headTransform.rotation = Quaternion.Lerp(headTransform.rotation, headRotation, headScore);
         }
     }
     #endregion

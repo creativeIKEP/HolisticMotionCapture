@@ -32,12 +32,14 @@ public class HolisticMotionCapture : System.IDisposable
 
     public void AvatarPoseRender(
         Texture inputTexture, 
+        float poseScoreThreshold,
+        bool isUpperBodyOnly,
         HolisticMocapType mocapType = HolisticMocapType.full,
         BlazePoseModel blazePoseModel = BlazePoseModel.full,
         float poseDetectionThreshold = 0.75f,
         float poseDetectionIouThreshold = 0.3f)
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-        avatarController.PoseRender(holisticPipeline.poseLandmarkWorldBuffer);
+        avatarController.PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
     }
 }

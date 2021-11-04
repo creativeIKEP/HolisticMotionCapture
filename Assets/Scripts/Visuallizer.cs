@@ -8,8 +8,9 @@ public class Visuallizer : MonoBehaviour
     [SerializeField] Camera cam;
     [SerializeField] WebCamInput webCamInput;
     [SerializeField] RawImage image;
+    [SerializeField] bool isUpperBodyOnly = false;
     [SerializeField] Shader poseShader;
-    [SerializeField, Range(0, 1)] float humanExistThreshold = 0.5f;
+    [SerializeField, Range(0, 1)] float humanPoseThreshold = 0.5f;
     [SerializeField] Shader faceShader;
     [SerializeField] Mesh faceLineTemplateMesh;
     [SerializeField] Shader handShader;
@@ -51,7 +52,7 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, holisticMocapType);
+        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, isUpperBodyOnly, holisticMocapType);
     }
 
     void OnRenderObject(){
@@ -81,7 +82,7 @@ public class Visuallizer : MonoBehaviour
         poseMaterial.SetBuffer("_vertices", motionCapture.poseLandmarkBuffer);
         // Set pose landmark counts.
         poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
-        poseMaterial.SetFloat("_humanExistThreshold", humanExistThreshold);
+        poseMaterial.SetFloat("_humanExistThreshold", humanPoseThreshold);
         poseMaterial.SetVector("_uiScale", new Vector2(w, h));
         poseMaterial.SetVectorArray("_linePair", linePair);
 
@@ -100,7 +101,7 @@ public class Visuallizer : MonoBehaviour
         poseMaterial.SetBuffer("_worldVertices", motionCapture.poseLandmarkWorldBuffer);
         // Set pose landmark counts.
         poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
-        poseMaterial.SetFloat("_humanExistThreshold", humanExistThreshold);
+        poseMaterial.SetFloat("_humanExistThreshold", humanPoseThreshold);
         poseMaterial.SetVectorArray("_linePair", linePair);
         poseMaterial.SetMatrix("_invViewMatrix", cam.worldToCameraMatrix.inverse);
 

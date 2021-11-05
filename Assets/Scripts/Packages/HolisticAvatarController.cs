@@ -81,12 +81,12 @@ public class HolisticAvatarController
             var fallbackParentBone = fallbackParentBones[i];
             var fallbackChildBone = fallbackChildBones[i];
 
-            for(int j = 0; j<boneList.Length; j++){
+            for(int j = boneListStartIndex; j<boneList.Length; j++){
                 var boneTrans = avatar.GetBoneTransform(boneList[j]);
                 if(boneTrans == null) continue;
                 var bone = boneList[j];
 
-                HumanBodyBones parent = HumanBodyBones.Hips;
+                HumanBodyBones parent = fallbackParentBone;
                 for(int k = j - 1; k >= 0; k--){
                     boneTrans = avatar.GetBoneTransform(boneList[k]);
                     if(boneTrans == null) continue;
@@ -94,7 +94,7 @@ public class HolisticAvatarController
                     break;
                 }
 
-                HumanBodyBones child = HumanBodyBones.Head;
+                HumanBodyBones child = fallbackChildBone;
                 for(int k = j + 1; k < boneList.Length; k++){
                     boneTrans = avatar.GetBoneTransform(boneList[k]);
                     if(boneTrans == null) continue;

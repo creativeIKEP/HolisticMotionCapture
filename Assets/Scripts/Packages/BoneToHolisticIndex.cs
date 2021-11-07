@@ -48,6 +48,29 @@ public static class BoneToHolisticIndex{
 
         {HumanBodyBones.LeftLittleProximal, 17},
         {HumanBodyBones.LeftLittleIntermediate, 18},
-        {HumanBodyBones.LeftLittleDistal, 19}
+        {HumanBodyBones.LeftLittleDistal, 19},
+
+
+        {HumanBodyBones.RightHand, 0},
+
+        {HumanBodyBones.RightThumbProximal, 1},
+        {HumanBodyBones.RightThumbIntermediate, 2},
+        {HumanBodyBones.RightThumbDistal, 3},
+
+        {HumanBodyBones.RightIndexProximal, 5},
+        {HumanBodyBones.RightIndexIntermediate, 6},
+        {HumanBodyBones.RightIndexDistal, 7},
+        
+        {HumanBodyBones.RightMiddleProximal, 9},
+        {HumanBodyBones.RightMiddleIntermediate, 10},
+        {HumanBodyBones.RightMiddleDistal, 11},
+        
+        {HumanBodyBones.RightRingProximal, 13},
+        {HumanBodyBones.RightRingIntermediate, 14},
+        {HumanBodyBones.RightRingDistal, 15},
+
+        {HumanBodyBones.RightLittleProximal, 17},
+        {HumanBodyBones.RightLittleIntermediate, 18},
+        {HumanBodyBones.RightLittleDistal, 19}
     };
 }

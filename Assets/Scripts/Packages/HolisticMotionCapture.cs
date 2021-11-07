@@ -4,7 +4,7 @@ using UnityEngine;
 using MediaPipe.Holistic;
 using Mediapipe.BlazePose;
 
-public class HolisticMotionCapture : System.IDisposable
+public partial class HolisticMotionCapture : System.IDisposable
 {
     public int poseVertexCount => holisticPipeline.poseVertexCount;
     public ComputeBuffer poseLandmarkBuffer => holisticPipeline.poseLandmarkBuffer;
@@ -19,11 +19,13 @@ public class HolisticMotionCapture : System.IDisposable
     public ComputeBuffer rightHandVertexBuffer => holisticPipeline.rightHandVertexBuffer;
 
     HolisticPipeline holisticPipeline;
-    HolisticAvatarController avatarController;
+    Animator avatar;
 
     public HolisticMotionCapture(Animator avatarAnimator, HolisticResource holisticResource, BlazePoseModel blazePoseModel = BlazePoseModel.full){
+        avatar = avatarAnimator;
         holisticPipeline = new HolisticPipeline(holisticResource, blazePoseModel);
-        avatarController = new HolisticAvatarController(avatarAnimator);
+        PoseInit();
+        HandInit();
     }
 
     public void Dispose(){
@@ -40,7 +42,7 @@ public class HolisticMotionCapture : System.IDisposable
         float poseDetectionIouThreshold = 0.3f)
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-        avatarController.PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
-        avatarController.HandRender(true, holisticPipeline.leftHandVertexBuffer);
+        PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
+        HandRender(true, holisticPipeline.leftHandVertexBuffer);
     }
 }

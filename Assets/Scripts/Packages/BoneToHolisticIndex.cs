@@ -26,4 +26,28 @@ public static class BoneToHolisticIndex{
         {HumanBodyBones.LeftFoot, 27},
         {HumanBodyBones.LeftToes, 31}
     };
+
+    public static Dictionary<HumanBodyBones, int> handTable = new Dictionary<HumanBodyBones, int>(){
+        {HumanBodyBones.LeftHand, 0},
+
+        {HumanBodyBones.LeftThumbProximal, 1},
+        {HumanBodyBones.LeftThumbIntermediate, 2},
+        {HumanBodyBones.LeftThumbDistal, 3},
+
+        {HumanBodyBones.LeftIndexProximal, 5},
+        {HumanBodyBones.LeftIndexIntermediate, 6},
+        {HumanBodyBones.LeftIndexDistal, 7},
+        
+        {HumanBodyBones.LeftMiddleProximal, 9},
+        {HumanBodyBones.LeftMiddleIntermediate, 10},
+        {HumanBodyBones.LeftMiddleDistal, 11},
+        
+        {HumanBodyBones.LeftRingProximal, 13},
+        {HumanBodyBones.LeftRingIntermediate, 14},
+        {HumanBodyBones.LeftRingDistal, 15},
+
+        {HumanBodyBones.LeftLittleProximal, 17},
+        {HumanBodyBones.LeftLittleIntermediate, 18},
+        {HumanBodyBones.LeftLittleDistal, 19}
+    };
 }

@@ -41,5 +41,6 @@ public class HolisticMotionCapture : System.IDisposable
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
         avatarController.PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
+        avatarController.HandRender(true, holisticPipeline.leftHandVertexBuffer);
     }
 }

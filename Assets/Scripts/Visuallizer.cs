@@ -52,7 +52,7 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, isUpperBodyOnly, holisticMocapType);
+        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, isUpperBodyOnly, holisticMocapType);
     }
 
     void OnRenderObject(){

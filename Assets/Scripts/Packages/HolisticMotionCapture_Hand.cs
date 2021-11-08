@@ -94,9 +94,11 @@ partial class HolisticMotionCapture{
         if(!isLeft) handForward *= -1;
         
         var wristScore = handLandmarks[BoneToHolisticIndex.handTable[wrist]].w;
-        var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
-        var wristTransform = avatar.GetBoneTransform(wrist);
-        wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
+        if(wristScore >= scoreThreshold){
+            var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
+            var wristTransform = avatar.GetBoneTransform(wrist);
+            wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
+        }
 
         var rotatedBones = new HumanBodyBones[]{
             HumanBodyBones.LeftThumbProximal + offset, HumanBodyBones.LeftThumbIntermediate + offset, HumanBodyBones.LeftThumbDistal + offset,

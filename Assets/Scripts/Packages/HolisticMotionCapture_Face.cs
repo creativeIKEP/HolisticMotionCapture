@@ -11,15 +11,24 @@ partial class HolisticMotionCapture
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
     }
 
-    void FaceRender(ComputeBuffer faceVertexBuffer, ComputeBuffer leftEyeVertexBuffer, ComputeBuffer rightEyeVertexBuffer){
+    void FaceRender(ComputeBuffer faceVertexBuffer, ComputeBuffer leftEyeVertexBuffer, ComputeBuffer rightEyeVertexBuffer, bool isSeparateEyeBlink){
         var leftEyeBlink = CalculateEyeBlink(leftEyeVertexBuffer);
         var rightEyeBlink = CalculateEyeBlink(rightEyeVertexBuffer);
         
-        proxy.SetValues(new Dictionary<BlendShapeKey, float>
-        {
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), rightEyeBlink}
-        });
+        if(isSeparateEyeBlink){
+            proxy.SetValues(new Dictionary<BlendShapeKey, float>
+            {
+                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
+                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), rightEyeBlink}
+            });
+        }
+        else{
+            var blink = IntegratedBlink(leftEyeBlink, rightEyeBlink);
+            proxy.SetValues(new Dictionary<BlendShapeKey, float>
+            {
+                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink), blink}
+            });
+        }
     }
 
     float CalculateEyeBlink(ComputeBuffer eyeVertexBuffer){
@@ -38,9 +47,19 @@ partial class HolisticMotionCapture
         var eyeInnerLidDistance = Vector2.Distance(eyeInnerUpperLid, eyeInnerLowerLid);
 
         var ear = (eyeOuterLidDistance + eyeInnerLidDistance) / (2 * eyeWidth);
-        var eyeOpenRatio = (ear - 0.25f) / (0.4f - 0.25f);
+        var maxRatio = 0.5f;
+        var minRatio = 0.3f;
+        var eyeOpenRatio = (ear - minRatio) / (maxRatio - minRatio);
         var eyeBlink = 1.0f - eyeOpenRatio;
         eyeBlink = Mathf.Clamp(eyeBlink, 0, 1);
         return eyeBlink;
+    }
+
+    float IntegratedBlink(float leftEyeBlink, float rightEyeBlink){
+        var headRot = avatar.GetBoneTransform(HumanBodyBones.Head).rotation;
+        if(0 <= headRot.eulerAngles.y && headRot.eulerAngles.y <= 180){
+            return leftEyeBlink;
+        }
+        return rightEyeBlink;
     }
 }

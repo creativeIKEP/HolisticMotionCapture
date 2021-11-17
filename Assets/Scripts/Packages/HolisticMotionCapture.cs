@@ -38,6 +38,7 @@ public partial class HolisticMotionCapture : System.IDisposable
         Texture inputTexture, 
         float poseScoreThreshold = 0.5f,
         float handScoreThreshold = 0.5f,
+        bool isSeparateEyeBlink = false,
         bool isUpperBodyOnly = false,
         HolisticMocapType mocapType = HolisticMocapType.full,
         BlazePoseModel blazePoseModel = BlazePoseModel.full,
@@ -48,6 +49,6 @@ public partial class HolisticMotionCapture : System.IDisposable
         PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
         HandRender(true, holisticPipeline.leftHandVertexBuffer, handScoreThreshold);
         HandRender(false, holisticPipeline.rightHandVertexBuffer, handScoreThreshold);
-        FaceRender(holisticPipeline.faceVertexBuffer, holisticPipeline.leftEyeVertexBuffer, holisticPipeline.rightEyeVertexBuffer);
+        FaceRender(holisticPipeline.faceVertexBuffer, holisticPipeline.leftEyeVertexBuffer, holisticPipeline.rightEyeVertexBuffer, isSeparateEyeBlink);
     }
 }

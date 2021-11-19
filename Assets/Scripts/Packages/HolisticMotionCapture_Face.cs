@@ -12,8 +12,20 @@ partial class HolisticMotionCapture
     }
 
     void FaceRender(ComputeBuffer faceVertexBuffer, ComputeBuffer leftEyeVertexBuffer, ComputeBuffer rightEyeVertexBuffer, bool isSeparateEyeBlink){
-        var leftEyeBlink = CalculateEyeBlink(leftEyeVertexBuffer);
-        var rightEyeBlink = CalculateEyeBlink(rightEyeVertexBuffer);
+        var leftEyeLandmarks = new Vector4[eyeVertexCount];
+        leftEyeVertexBuffer.GetData(leftEyeLandmarks);
+        var rightEyeLandmarks = new Vector4[eyeVertexCount];
+        rightEyeVertexBuffer.GetData(rightEyeLandmarks);
+
+        BlinkRender(leftEyeLandmarks, rightEyeLandmarks, isSeparateEyeBlink);
+        PupilRender(leftEyeLandmarks, rightEyeLandmarks);
+    }
+
+    void BlinkRender(Vector4[] leftEyeLandmarks, Vector4[] rightEyeLandmarks, bool isSeparateEyeBlink){
+        if(proxy == null) return;
+
+        var leftEyeBlink = CalculateEyeBlink(leftEyeLandmarks);
+        var rightEyeBlink = CalculateEyeBlink(rightEyeLandmarks);
         
         if(isSeparateEyeBlink){
             proxy.SetValues(new Dictionary<BlendShapeKey, float>
@@ -31,10 +43,7 @@ partial class HolisticMotionCapture
         }
     }
 
-    float CalculateEyeBlink(ComputeBuffer eyeVertexBuffer){
-        var eyeLandmarks = new Vector4[eyeVertexCount];
-        eyeVertexBuffer.GetData(eyeLandmarks);
-
+    float CalculateEyeBlink(Vector4[] eyeLandmarks){
         var eyeOuterCorner = eyeLandmarks[5];
         var eyeInnerCorner = eyeLandmarks[13];
         var eyeOuterUpperLid = eyeLandmarks[16];
@@ -61,5 +70,42 @@ partial class HolisticMotionCapture
             return leftEyeBlink;
         }
         return rightEyeBlink;
+    }
+
+    void PupilRender(Vector4[] leftEyeLandmarks, Vector4[] rightEyeLandmarks){
+        var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
+        var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
+        if(leftPupilBoneTrans == null || rightPupilBoneTrans == null) return;
+
+        var leftRatio = CalculatePupil(leftEyeLandmarks);
+        var rightRatio = CalculatePupil(rightEyeLandmarks);
+        var ratioAvg = (leftRatio + rightRatio) * 0.5f * 1.5f;
+        ratioAvg.x = ratioAvg.x * 0.5f + 0.5f;
+        ratioAvg.y = ratioAvg.y * 0.5f + 0.5f;
+        var ry = Mathf.Lerp(-8, 12, ratioAvg.x);
+        var ly = Mathf.Lerp(-12, 8, ratioAvg.x);
+        var x = Mathf.Lerp(-10, 10, ratioAvg.y);
+        leftPupilBoneTrans.localRotation = Quaternion.Euler(x, ly, 0);
+        rightPupilBoneTrans.localRotation = Quaternion.Euler(x, ry, 0);
+    }
+
+    Vector2 CalculatePupil(Vector4[] eyeLandmarks){
+        var eyeOuterCorner = eyeLandmarks[5];
+        var eyeInnerCorner = eyeLandmarks[13];
+        var eyeMidUpper = eyeLandmarks[17];
+        var eyeMidLower = eyeLandmarks[9];
+        var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
+        var eyeHeight = Vector2.Distance(eyeMidUpper, eyeMidLower);
+        var eyeMidPoint = (eyeOuterCorner + eyeInnerCorner) * 0.5f;
+        var pupil = eyeLandmarks[0];
+
+        var dx = eyeMidPoint.x - pupil.x;
+        var dy = eyeMidPoint.y - pupil.y;
+
+        var ratioX = dx / (eyeWidth * 0.5f);
+        var ratioY = dy / (eyeHeight * 0.5f);
+        if(float.IsInfinity(ratioX) || float.IsNaN(ratioX)) ratioX = 0;
+        if(float.IsInfinity(ratioY) || float.IsNaN(ratioY)) ratioY = 0;
+        return new Vector2(ratioX, ratioY);
     }
 }

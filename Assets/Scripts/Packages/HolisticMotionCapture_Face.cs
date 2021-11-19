@@ -82,8 +82,8 @@ partial class HolisticMotionCapture
         var ratioAvg = (leftRatio + rightRatio) * 0.5f * 1.5f;
         ratioAvg.x = ratioAvg.x * 0.5f + 0.5f;
         ratioAvg.y = ratioAvg.y * 0.5f + 0.5f;
-        var ry = Mathf.Lerp(-8, 12, ratioAvg.x);
-        var ly = Mathf.Lerp(-12, 8, ratioAvg.x);
+        var ry = Mathf.Lerp(-12, 12, ratioAvg.x);
+        var ly = Mathf.Lerp(-12, 12, ratioAvg.x);
         var x = Mathf.Lerp(-10, 10, ratioAvg.y);
         leftPupilBoneTrans.localRotation = Quaternion.Euler(x, ly, 0);
         rightPupilBoneTrans.localRotation = Quaternion.Euler(x, ry, 0);
@@ -104,6 +104,7 @@ partial class HolisticMotionCapture
 
         var ratioX = dx / (eyeWidth * 0.5f);
         var ratioY = dy / (eyeHeight * 0.5f);
+        ratioY += 0.3f;
         if(float.IsInfinity(ratioX) || float.IsNaN(ratioX)) ratioX = 0;
         if(float.IsInfinity(ratioY) || float.IsNaN(ratioY)) ratioY = 0;
         return new Vector2(ratioX, ratioY);

@@ -97,12 +97,9 @@ partial class HolisticMotionCapture
         poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
-    void PoseRender(ComputeBuffer poseWorldBuffer, float scoreThreshold, bool isUpperBodyOnly){
-        var poseLandmarks = new Vector4[poseVertexCount + 1];
-        poseWorldBuffer.GetData(poseLandmarks);
-
+    void PoseRender(float scoreThreshold, bool isUpperBodyOnly){
         // Reset pose if huamn is not visible.
-        if(poseLandmarks[poseVertexCount].x < scoreThreshold){
+        if(holisticPipeline.GetPoseWorldLandmark(poseVertexCount).x < scoreThreshold){
             ResetPose();
             return;
         }
@@ -113,22 +110,18 @@ partial class HolisticMotionCapture
             this.isUpperBodyOnly = isUpperBodyOnly;
         }
 
-        for(int i = 0; i < poseVertexCount; i++){
-            poseLandmarks[i] = new Vector4(-poseLandmarks[i].x, poseLandmarks[i].y, -poseLandmarks[i].z, poseLandmarks[i].w);
-        }
-
         // Caluculate positions of hip, neck and spine.
         var rightHipIndex = BoneToHolisticIndex.PoseTable[HumanBodyBones.RightUpperLeg];
         var leftHipIndex = BoneToHolisticIndex.PoseTable[HumanBodyBones.LeftUpperLeg];
         var rightShoulderIndex = BoneToHolisticIndex.PoseTable[HumanBodyBones.RightUpperArm];
         var leftShoulderIndex = BoneToHolisticIndex.PoseTable[HumanBodyBones.LeftUpperArm];
-        Vector3 hipPosition = (poseLandmarks[rightHipIndex] + poseLandmarks[leftHipIndex]) / 2.0f;
-        Vector3 neckPosition = (poseLandmarks[rightShoulderIndex] + poseLandmarks[leftShoulderIndex]) / 2.0f;
+        Vector3 hipPosition = (RotatePoseLandmark(rightHipIndex) + RotatePoseLandmark(leftHipIndex)) / 2.0f;
+        Vector3 neckPosition = (RotatePoseLandmark(rightShoulderIndex) + RotatePoseLandmark(leftShoulderIndex)) / 2.0f;
         Vector3 spinePosition = (hipPosition + neckPosition) / 2.0f;
 
         // Caluculate avatar forward direction and hip rotation.
-        var forward = TriangleNormal(spinePosition, poseLandmarks[leftHipIndex], poseLandmarks[rightHipIndex]);
-        var hipScore = (poseLandmarks[leftHipIndex].w + poseLandmarks[rightHipIndex].w) * 0.5f;
+        var forward = TriangleNormal(spinePosition, RotatePoseLandmark(leftHipIndex), RotatePoseLandmark(rightHipIndex));
+        var hipScore = (RotatePoseLandmark(leftHipIndex).w + RotatePoseLandmark(rightHipIndex).w) * 0.5f;
         if(hipScore > scoreThreshold && !isUpperBodyOnly){
             var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation *  poseJoints[HumanBodyBones.Hips].initRotation;
             var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Hips);
@@ -158,20 +151,20 @@ partial class HolisticMotionCapture
             var poseJoint = poseJoints[bone];
             var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
-            float score = poseLandmarks[boneLandmarkIndex].w;
+            float score = RotatePoseLandmark(boneLandmarkIndex).w;
             if(score < scoreThreshold) continue;
 
-            Vector3 toChild = poseLandmarks[childLandmarkIndex] - poseLandmarks[boneLandmarkIndex];
+            Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
             var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
             var boneTrans = avatar.GetBoneTransform(bone);
             boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, rot, score);
         }
 
         // Rotate head with pose landmark.
-        var leftEyeLandmark = poseLandmarks[2];
-        var rightEyeLandmark = poseLandmarks[5];
-        var leftMouthLandmark = poseLandmarks[9];
-        var rightMouthLandmark = poseLandmarks[10];
+        var leftEyeLandmark = RotatePoseLandmark(2);
+        var rightEyeLandmark = RotatePoseLandmark(5);
+        var leftMouthLandmark = RotatePoseLandmark(9);
+        var rightMouthLandmark = RotatePoseLandmark(10);
         var eyeMid = (leftEyeLandmark + rightEyeLandmark) * 0.5f;
         var mouthMid = (leftMouthLandmark + rightMouthLandmark) * 0.5f;
         var headScore = (eyeMid.w + mouthMid.w) * 0.5f;
@@ -215,5 +208,10 @@ partial class HolisticMotionCapture
         Vector3 dd = Vector3.Cross(d1, d2);
         dd.Normalize();
         return dd;
+    }
+
+    Vector4 RotatePoseLandmark(int index){
+        var landmark = holisticPipeline.GetPoseWorldLandmark(index);
+        return new Vector4(-landmark.x, landmark.y, -landmark.z, landmark.w);
     }
 }

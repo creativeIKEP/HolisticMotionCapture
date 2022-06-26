@@ -46,9 +46,9 @@ public partial class HolisticMotionCapture : System.IDisposable
         float poseDetectionIouThreshold = 0.3f)
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-        PoseRender(holisticPipeline.poseLandmarkWorldBuffer, poseScoreThreshold, isUpperBodyOnly);
-        HandRender(true, holisticPipeline.leftHandVertexBuffer, handScoreThreshold);
-        HandRender(false, holisticPipeline.rightHandVertexBuffer, handScoreThreshold);
-        FaceRender(holisticPipeline.faceVertexBuffer, holisticPipeline.leftEyeVertexBuffer, holisticPipeline.rightEyeVertexBuffer, isSeparateEyeBlink);
+        PoseRender(poseScoreThreshold, isUpperBodyOnly);
+        HandRender(true, handScoreThreshold);
+        HandRender(false, handScoreThreshold);
+        FaceRender(isSeparateEyeBlink);
     }
 }

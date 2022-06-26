@@ -11,24 +11,26 @@ partial class HolisticMotionCapture
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
     }
 
-    void FaceRender(ComputeBuffer faceVertexBuffer, ComputeBuffer leftEyeVertexBuffer, ComputeBuffer rightEyeVertexBuffer, bool isSeparateEyeBlink){
-        var faceLandmarks = new Vector4[faceVertexCount];
-        faceVertexBuffer.GetData(faceLandmarks);
-        var leftEyeLandmarks = new Vector4[eyeVertexCount];
-        leftEyeVertexBuffer.GetData(leftEyeLandmarks);
-        var rightEyeLandmarks = new Vector4[eyeVertexCount];
-        rightEyeVertexBuffer.GetData(rightEyeLandmarks);
-
-        BlinkRender(leftEyeLandmarks, rightEyeLandmarks, isSeparateEyeBlink);
-        PupilRender(leftEyeLandmarks, rightEyeLandmarks);
-        MouthRender(faceLandmarks);
+    void FaceRender(bool isSeparateEyeBlink){
+        BlinkRender(isSeparateEyeBlink);
+        PupilRender();
+        MouthRender();
     }
 
-    void BlinkRender(Vector4[] leftEyeLandmarks, Vector4[] rightEyeLandmarks, bool isSeparateEyeBlink){
+    Vector4 FaceLandmark(int index){
+        return holisticPipeline.GetFaceLandmark(index);
+    }
+
+    Vector4 EyeLandmark(int index, bool isLeft){
+        var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
+        return landmark;
+    }
+
+    void BlinkRender(bool isSeparateEyeBlink){
         if(proxy == null) return;
 
-        var leftEyeBlink = CalculateEyeBlink(leftEyeLandmarks);
-        var rightEyeBlink = CalculateEyeBlink(rightEyeLandmarks);
+        var leftEyeBlink = CalculateEyeBlink(true);
+        var rightEyeBlink = CalculateEyeBlink(false);
         
         if(isSeparateEyeBlink){
             proxy.SetValues(new Dictionary<BlendShapeKey, float>
@@ -46,13 +48,13 @@ partial class HolisticMotionCapture
         }
     }
 
-    float CalculateEyeBlink(Vector4[] eyeLandmarks){
-        var eyeOuterCorner = eyeLandmarks[5];
-        var eyeInnerCorner = eyeLandmarks[13];
-        var eyeOuterUpperLid = eyeLandmarks[16];
-        var eyeOuterLowerLid = eyeLandmarks[8];
-        var eyeInnerUpperLid = eyeLandmarks[18];
-        var eyeInnerLowerLid = eyeLandmarks[10];
+    float CalculateEyeBlink(bool isLeft){
+        var eyeOuterCorner = EyeLandmark(5, isLeft);
+        var eyeInnerCorner = EyeLandmark(13, isLeft);
+        var eyeOuterUpperLid = EyeLandmark(16, isLeft);
+        var eyeOuterLowerLid = EyeLandmark(8, isLeft);
+        var eyeInnerUpperLid = EyeLandmark(18, isLeft);
+        var eyeInnerLowerLid = EyeLandmark(10, isLeft);
 
         var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
         var eyeOuterLidDistance = Vector2.Distance(eyeOuterUpperLid, eyeOuterLowerLid);
@@ -75,13 +77,13 @@ partial class HolisticMotionCapture
         return rightEyeBlink;
     }
 
-    void PupilRender(Vector4[] leftEyeLandmarks, Vector4[] rightEyeLandmarks){
+    void PupilRender(){
         var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
         var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
         if(leftPupilBoneTrans == null || rightPupilBoneTrans == null) return;
 
-        var leftRatio = CalculatePupil(leftEyeLandmarks);
-        var rightRatio = CalculatePupil(rightEyeLandmarks);
+        var leftRatio = CalculatePupil(true);
+        var rightRatio = CalculatePupil(false);
         var ratioAvg = (leftRatio + rightRatio) * 0.5f * 1.5f;
         ratioAvg.x = ratioAvg.x * 0.5f + 0.5f;
         ratioAvg.y = ratioAvg.y * 0.5f + 0.5f;
@@ -92,15 +94,15 @@ partial class HolisticMotionCapture
         rightPupilBoneTrans.localRotation = Quaternion.Euler(x, ry, 0);
     }
 
-    Vector2 CalculatePupil(Vector4[] eyeLandmarks){
-        var eyeOuterCorner = eyeLandmarks[5];
-        var eyeInnerCorner = eyeLandmarks[13];
-        var eyeMidUpper = eyeLandmarks[17];
-        var eyeMidLower = eyeLandmarks[9];
+    Vector2 CalculatePupil(bool isLeft){
+        var eyeOuterCorner = EyeLandmark(5, isLeft);
+        var eyeInnerCorner = EyeLandmark(13, isLeft);
+        var eyeMidUpper = EyeLandmark(17, isLeft);
+        var eyeMidLower = EyeLandmark(9, isLeft);
         var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
         var eyeHeight = Vector2.Distance(eyeMidUpper, eyeMidLower);
         var eyeMidPoint = (eyeOuterCorner + eyeInnerCorner) * 0.5f;
-        var pupil = eyeLandmarks[0];
+        var pupil = EyeLandmark(0, isLeft);
 
         var dx = eyeMidPoint.x - pupil.x;
         var dy = eyeMidPoint.y - pupil.y;
@@ -113,19 +115,19 @@ partial class HolisticMotionCapture
         return new Vector2(ratioX, ratioY);
     }
 
-    void MouthRender(Vector4[] faceLandmarks){
-        var eyeInnerCornerL = faceLandmarks[133];
-        var eyeInnerCornerR = faceLandmarks[362];
-        var eyeOuterCornerL = faceLandmarks[130];
-        var eyeOuterCornerR = faceLandmarks[263];
+    void MouthRender(){
+        var eyeInnerCornerL = FaceLandmark(133);
+        var eyeInnerCornerR = FaceLandmark(362);
+        var eyeOuterCornerL = FaceLandmark(130);
+        var eyeOuterCornerR = FaceLandmark(263);
 
         var eyeInnerDistance = Vector3.Distance(eyeInnerCornerL, eyeInnerCornerR);
         var eyeOuterDistance = Vector3.Distance(eyeOuterCornerL, eyeOuterCornerR);
 
-        var upperInnerLip = faceLandmarks[13];
-        var lowerInnerLip = faceLandmarks[14];
-        var mouthCornerLeft = faceLandmarks[61];
-        var mouthCornerRight = faceLandmarks[291];
+        var upperInnerLip = FaceLandmark(13);
+        var lowerInnerLip = FaceLandmark(14);
+        var mouthCornerLeft = FaceLandmark(61);
+        var mouthCornerRight = FaceLandmark(291);
 
         var mouthOpen = Vector3.Distance(upperInnerLip, lowerInnerLip);
         var mouthWidth = Vector3.Distance(mouthCornerLeft, mouthCornerRight);

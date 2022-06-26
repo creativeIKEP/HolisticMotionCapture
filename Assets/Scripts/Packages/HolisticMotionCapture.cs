@@ -22,9 +22,9 @@ public partial class HolisticMotionCapture : System.IDisposable
     HolisticPipeline holisticPipeline;
     Animator avatar;
 
-    public HolisticMotionCapture(Animator avatarAnimator, HolisticResource holisticResource, BlazePoseModel blazePoseModel = BlazePoseModel.full){
+    public HolisticMotionCapture(Animator avatarAnimator, BlazePoseModel blazePoseModel = BlazePoseModel.full){
         avatar = avatarAnimator;
-        holisticPipeline = new HolisticPipeline(holisticResource, blazePoseModel);
+        holisticPipeline = new HolisticPipeline(blazePoseModel);
         PoseInit();
         HandInit();
         FaceInit();

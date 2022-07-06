@@ -75,10 +75,14 @@ partial class HolisticMotionCapture{
         handJoints[wrist] = new Joint(wrist, wrist, wrist, avatar.GetBoneTransform(wrist).rotation, Quaternion.Inverse(Quaternion.LookRotation(handForward)));
     }
 
-    void HandRender(bool isLeft, float scoreThreshold){
+    void HandRender(HolisticMocapType mocapType, bool isLeft, float scoreThreshold){
+        if(mocapType != HolisticMocapType.full && mocapType == HolisticMocapType.pose_and_hand){
+            return;
+        }
+
         var wrist = isLeft ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
         int offset = isLeft ? 0 : 15;
-        var wristScore = holisticPipeline.GetPoseWorldLandmark(BoneToHolisticIndex.PoseTable[wrist]).w;
+        var wristScore = isLeft ? holisticPipeline.leftHandDetectionScore : holisticPipeline.rightHandDetectionScore;
         if(wristScore < scoreThreshold){
             return;
         }
@@ -106,7 +110,6 @@ partial class HolisticMotionCapture{
             var handJoint = handJoints[bone];
             var boneLandmarkIndex = BoneToHolisticIndex.handTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.handTable[handJoint.childBone];
-            float score = RotatePoseLandmark(boneLandmarkIndex, isLeft).w;
 
             Vector3 toChild = RotatePoseLandmark(childLandmarkIndex, isLeft) - RotatePoseLandmark(boneLandmarkIndex, isLeft);
             if(boneLandmarkIndex == childLandmarkIndex){

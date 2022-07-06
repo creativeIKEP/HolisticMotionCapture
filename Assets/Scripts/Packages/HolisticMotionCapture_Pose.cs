@@ -97,7 +97,9 @@ partial class HolisticMotionCapture
         poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
-    void PoseRender(float scoreThreshold, bool isUpperBodyOnly){
+    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly){
+        if(mocapType == HolisticMocapType.face_only) return;
+
         // Reset pose if huamn is not visible.
         if(holisticPipeline.GetPoseWorldLandmark(poseVertexCount).x < scoreThreshold){
             ResetPose();
@@ -182,22 +184,9 @@ partial class HolisticMotionCapture
     }
 
     void ResetPose(){
-        var bones = new HumanBodyBones[]{
-            HumanBodyBones.Hips,
-            HumanBodyBones.RightUpperArm, 
-            HumanBodyBones.RightLowerArm,
-            HumanBodyBones.LeftUpperArm,
-            HumanBodyBones.LeftLowerArm,
-            HumanBodyBones.RightUpperLeg,
-            HumanBodyBones.RightLowerLeg,
-            HumanBodyBones.RightFoot,
-            HumanBodyBones.LeftUpperLeg,
-            HumanBodyBones.LeftLowerLeg,
-            HumanBodyBones.LeftFoot
-        };
-        foreach(var bone in bones){
-            var boneTrans = avatar.GetBoneTransform(bone);
-            boneTrans.rotation = poseJoints[bone].initRotation;
+        foreach(var poseJoint in poseJoints){
+            var boneTrans = avatar.GetBoneTransform(poseJoint.Key);
+            boneTrans.rotation = poseJoints[poseJoint.Key].initRotation;
         }
     }
 

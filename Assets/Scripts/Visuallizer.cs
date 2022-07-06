@@ -14,6 +14,7 @@ public class Visuallizer : MonoBehaviour
     [SerializeField, Range(0, 1)] float humanPoseThreshold = 0.5f;
     [SerializeField] Shader faceShader;
     [SerializeField] Mesh faceLineTemplateMesh;
+    [SerializeField, Range(0, 1)] float faceScoreThreshold = 0.5f;
     [SerializeField] Shader handShader;
     [SerializeField, Range(0, 1)] float handScoreThreshold = 0.5f;
     // Select inference type with pull down on the Unity Editor.
@@ -51,7 +52,7 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, holisticMocapType);
+        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, holisticMocapType);
     }
 
     void OnRenderObject(){

@@ -11,10 +11,31 @@ partial class HolisticMotionCapture
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
     }
 
-    void FaceRender(bool isSeparateEyeBlink){
+    void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold, bool isSeparateEyeBlink){
+        if(mocapType == HolisticMocapType.pose_and_hand || mocapType == HolisticMocapType.pose_only){
+            return;
+        }
+
+        if(holisticPipeline.faceDetectionScore < faceScoreThreshold) {
+            return;
+        }
+
         BlinkRender(isSeparateEyeBlink);
         PupilRender();
         MouthRender();
+    }
+
+    float LpfAlpha(float x, float p_x, Vector3 param){
+        float dx = x - p_x;
+        float cutoff = param.y + param.x * Mathf.Abs(dx);
+        float r = 2.0f * 3.141592f * cutoff * param.z;
+        float alpha = r / (r + 1);
+        return alpha;
+    }
+
+    float LowPassFilter(float x, float p_x, Vector3 param){
+        float alpha = LpfAlpha(x, p_x, param);
+        return Mathf.Lerp(p_x, x, alpha);
     }
 
     Vector4 FaceLandmark(int index){
@@ -33,6 +54,10 @@ partial class HolisticMotionCapture
         var rightEyeBlink = CalculateEyeBlink(false);
         
         if(isSeparateEyeBlink){
+            var preLeftEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
+            var preRightEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
+            leftEyeBlink = LowPassFilter(leftEyeBlink, preLeftEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
+            rightEyeBlink = LowPassFilter(rightEyeBlink, preRightEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
             proxy.SetValues(new Dictionary<BlendShapeKey, float>
             {
                 {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
@@ -41,6 +66,8 @@ partial class HolisticMotionCapture
         }
         else{
             var blink = IntegratedBlink(leftEyeBlink, rightEyeBlink);
+            var preBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink));
+            blink = LowPassFilter(blink, preBlink, new Vector3(3f, 1.5f, Time.deltaTime));
             proxy.SetValues(new Dictionary<BlendShapeKey, float>
             {
                 {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink), blink}
@@ -57,12 +84,14 @@ partial class HolisticMotionCapture
         var eyeInnerLowerLid = EyeLandmark(10, isLeft);
 
         var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
+        if(eyeWidth < 1e-10){
+            eyeWidth = (float)(1e-10);
+        }
         var eyeOuterLidDistance = Vector2.Distance(eyeOuterUpperLid, eyeOuterLowerLid);
         var eyeInnerLidDistance = Vector2.Distance(eyeInnerUpperLid, eyeInnerLowerLid);
-
         var ear = (eyeOuterLidDistance + eyeInnerLidDistance) / (2 * eyeWidth);
-        var maxRatio = 0.5f;
-        var minRatio = 0.3f;
+        var maxRatio = 0.4f;
+        var minRatio = 0.2f;
         var eyeOpenRatio = (ear - minRatio) / (maxRatio - minRatio);
         var eyeBlink = 1.0f - eyeOpenRatio;
         eyeBlink = Mathf.Clamp(eyeBlink, 0, 1);
@@ -87,11 +116,16 @@ partial class HolisticMotionCapture
         var ratioAvg = (leftRatio + rightRatio) * 0.5f * 1.5f;
         ratioAvg.x = ratioAvg.x * 0.5f + 0.5f;
         ratioAvg.y = ratioAvg.y * 0.5f + 0.5f;
-        var ry = Mathf.Lerp(-12, 12, ratioAvg.x);
         var ly = Mathf.Lerp(-12, 12, ratioAvg.x);
+        var ry = Mathf.Lerp(-12, 12, ratioAvg.x);
         var x = Mathf.Lerp(-10, 10, ratioAvg.y);
-        leftPupilBoneTrans.localRotation = Quaternion.Euler(x, ly, 0);
-        rightPupilBoneTrans.localRotation = Quaternion.Euler(x, ry, 0);
+
+        var param = new Vector3(0.01f, 1.5f, Time.deltaTime);
+        var l_a = LpfAlpha(ly, leftPupilBoneTrans.localRotation.eulerAngles.y, param);
+        var r_a = LpfAlpha(ry, rightPupilBoneTrans.localRotation.eulerAngles.y, param);
+
+        leftPupilBoneTrans.localRotation = Quaternion.Lerp(leftPupilBoneTrans.localRotation, Quaternion.Euler(x, ly, 0), l_a);
+        rightPupilBoneTrans.localRotation = Quaternion.Lerp(rightPupilBoneTrans.localRotation, Quaternion.Euler(x, ry, 0), r_a);
     }
 
     Vector2 CalculatePupil(bool isLeft){
@@ -123,6 +157,12 @@ partial class HolisticMotionCapture
 
         var eyeInnerDistance = Vector3.Distance(eyeInnerCornerL, eyeInnerCornerR);
         var eyeOuterDistance = Vector3.Distance(eyeOuterCornerL, eyeOuterCornerR);
+        if(eyeInnerDistance < 1e-10){
+            eyeInnerDistance = (float)(1e-10);
+        }
+        if(eyeOuterDistance < 1e-10){
+            eyeOuterDistance = (float)(1e-10);
+        }
 
         var upperInnerLip = FaceLandmark(13);
         var lowerInnerLip = FaceLandmark(14);
@@ -148,13 +188,20 @@ partial class HolisticMotionCapture
         var ratioE = ((ratioU - 0.2f) / 0.8f) * (1 - ratioI) * 0.3f;
         var ratioO = (1 - ratioI) * 0.4f * ((mouthY - 0.3f) / 0.7f);
 
+        var param = new Vector3(30.0f, 1.5f, Time.deltaTime);
+        ratioI = LowPassFilter(Mathf.Clamp(ratioI, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I)), param);
+        ratioA = LowPassFilter(Mathf.Clamp(ratioA, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A)), param);
+        ratioU = LowPassFilter(Mathf.Clamp(ratioU, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U)), param);
+        ratioE = LowPassFilter(Mathf.Clamp(ratioE, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E)), param);
+        ratioO = LowPassFilter(Mathf.Clamp(ratioO, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O)), param);
+
         proxy.SetValues(new Dictionary<BlendShapeKey, float>
         {
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.A), Mathf.Clamp(ratioA, 0, 1)},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.I), Mathf.Clamp(ratioI, 0, 1)},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.U), Mathf.Clamp(ratioU, 0, 1)},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.E), Mathf.Clamp(ratioE, 0, 1)},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.O), Mathf.Clamp(ratioO, 0, 1)},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.A), ratioA},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.I), ratioI},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.U), ratioU},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.E), ratioE},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.O), ratioO},
         });
     }
 }

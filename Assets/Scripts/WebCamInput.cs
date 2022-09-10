@@ -7,7 +7,6 @@ public class WebCamInput : MonoBehaviour
     [SerializeField] Texture staticInput;
 
     // Provide input image Texture.
-    // TODO: UnityColorSpaceSettingsValidator.csを本番用に戻したものに対応する
     public Texture inputImageTexture{
         get{
             if(staticInput != null) return staticInput;

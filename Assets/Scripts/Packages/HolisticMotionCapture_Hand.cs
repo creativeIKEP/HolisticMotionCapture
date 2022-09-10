@@ -76,26 +76,45 @@ partial class HolisticMotionCapture{
     }
 
     void HandRender(HolisticMocapType mocapType, bool isLeft, float scoreThreshold){
-        if(mocapType != HolisticMocapType.full && mocapType == HolisticMocapType.pose_and_hand){
+        var wrist = isLeft ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+        var wristTransform = avatar.GetBoneTransform(wrist);
+
+        if(mocapType != HolisticMocapType.full && mocapType != HolisticMocapType.pose_and_hand){
+            var indexFinger = isLeft ? 19 : 20;
+            var pinkyFinger = isLeft ? 17 : 18;
+            
+            var wristScoreFromPose = RotatePoseLandmark(BoneToHolisticIndex.PoseTable[wrist]).w;
+            if(wristScoreFromPose < scoreThreshold) {
+                wristTransform.rotation = handJoints[wrist].initRotation;
+                return;
+            }
+
+            var wristToPinkyFromPose = RotatePoseLandmark(pinkyFinger) - RotatePoseLandmark(BoneToHolisticIndex.PoseTable[wrist]);
+            var wristToIndexFromPose = RotatePoseLandmark(indexFinger) - RotatePoseLandmark(BoneToHolisticIndex.PoseTable[wrist]);
+            var handUpFromPose = Vector3.Cross(wristToPinkyFromPose, wristToIndexFromPose);
+            if(!isLeft) handUpFromPose *= -1;
+            var handForwardFromPose = Vector3.Cross(handUpFromPose, wristToPinkyFromPose);
+            if(!isLeft) handForwardFromPose *= -1;
+            
+            var wristRotationForPose = Quaternion.LookRotation(handForwardFromPose, handUpFromPose) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
+            wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, wristRotationForPose, wristScoreFromPose);
             return;
         }
 
-        var wrist = isLeft ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
         int offset = isLeft ? 0 : 15;
         var wristScore = isLeft ? holisticPipeline.leftHandDetectionScore : holisticPipeline.rightHandDetectionScore;
         if(wristScore < scoreThreshold){
             return;
         }
 
-        var handDirection = RotatePoseLandmark(BoneToHolisticIndex.handTable[HumanBodyBones.LeftMiddleProximal + offset], isLeft) - RotatePoseLandmark(BoneToHolisticIndex.handTable[wrist], isLeft);
-        var wristToIndex = RotatePoseLandmark(BoneToHolisticIndex.handTable[HumanBodyBones.LeftIndexProximal + offset], isLeft) - RotatePoseLandmark(BoneToHolisticIndex.handTable[wrist], isLeft);
+        var handDirection = RotateHandLandmark(BoneToHolisticIndex.handTable[HumanBodyBones.LeftMiddleProximal + offset], isLeft) - RotateHandLandmark(BoneToHolisticIndex.handTable[wrist], isLeft);
+        var wristToIndex = RotateHandLandmark(BoneToHolisticIndex.handTable[HumanBodyBones.LeftIndexProximal + offset], isLeft) - RotateHandLandmark(BoneToHolisticIndex.handTable[wrist], isLeft);
         var handUp = Vector3.Cross(handDirection, wristToIndex);
         if(!isLeft) handUp *= -1;
         var handForward = Vector3.Cross(handUp, handDirection);
         if(!isLeft) handForward *= -1;
 
         var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
-        var wristTransform = avatar.GetBoneTransform(wrist);
         wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
         
         var rotatedBones = new HumanBodyBones[]{
@@ -111,9 +130,9 @@ partial class HolisticMotionCapture{
             var boneLandmarkIndex = BoneToHolisticIndex.handTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.handTable[handJoint.childBone];
 
-            Vector3 toChild = RotatePoseLandmark(childLandmarkIndex, isLeft) - RotatePoseLandmark(boneLandmarkIndex, isLeft);
+            Vector3 toChild = RotateHandLandmark(childLandmarkIndex, isLeft) - RotateHandLandmark(boneLandmarkIndex, isLeft);
             if(boneLandmarkIndex == childLandmarkIndex){
-                toChild = RotatePoseLandmark(boneLandmarkIndex + 1, isLeft) - RotatePoseLandmark(boneLandmarkIndex, isLeft);
+                toChild = RotateHandLandmark(boneLandmarkIndex + 1, isLeft) - RotateHandLandmark(boneLandmarkIndex, isLeft);
             }
 
             var rot = Quaternion.LookRotation(-toChild, handForward) * handJoints[bone].inverseRotation * handJoints[bone].initRotation;
@@ -122,7 +141,7 @@ partial class HolisticMotionCapture{
         }
     }
 
-    Vector4 RotatePoseLandmark(int index, bool isLeft){
+    Vector4 RotateHandLandmark(int index, bool isLeft){
         var landmark = isLeft ? holisticPipeline.GetLeftHandLandmark(index) : holisticPipeline.GetRightHandLandmark(index);
         return new Vector4(-landmark.x, landmark.y, -landmark.z, landmark.w);
     }

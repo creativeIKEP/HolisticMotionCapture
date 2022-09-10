@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using MediaPipe.Holistic;
+using UnityEngine.Rendering;
 
 public class Visuallizer : MonoBehaviour
 {
-    [SerializeField] Camera cam;
+    [SerializeField] Camera predictResultCamera;
     [SerializeField] WebCamInput webCamInput;
     [SerializeField] RawImage image;
     [SerializeField] bool isSeparateEyeBlink = false;
@@ -24,7 +24,10 @@ public class Visuallizer : MonoBehaviour
     HolisticMotionCapture motionCapture;
     Material poseMaterial;
     Material faceMeshMaterial;
-    Material handMaterial;
+    MaterialPropertyBlock faceMeshMaterialPropertyBlock;
+    Material leftHandMaterial;
+    Material rightHandMaterial;
+    CommandBuffer commandBuffer;
 
     // Lines count of body's topology.
     const int BODY_LINE_NUM = 35;
@@ -46,16 +49,22 @@ public class Visuallizer : MonoBehaviour
 
         poseMaterial = new Material(poseShader);
         faceMeshMaterial = new Material(faceShader);
-        handMaterial = new Material(handShader);
+        faceMeshMaterialPropertyBlock = new MaterialPropertyBlock();
+        leftHandMaterial = new Material(handShader);
+        rightHandMaterial = new Material(handShader);
+        commandBuffer = new CommandBuffer();
+        predictResultCamera.AddCommandBuffer(CameraEvent.AfterEverything, commandBuffer);
     }
 
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
         motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, holisticMocapType);
+        SetCommandBuffer();
     }
 
-    void OnRenderObject(){
+    void SetCommandBuffer() {
+        commandBuffer.Clear();
         if(holisticMocapType != HolisticMocapType.face_only) PoseRender();
         if(holisticMocapType == HolisticMocapType.pose_only) return;
 
@@ -87,31 +96,10 @@ public class Visuallizer : MonoBehaviour
         poseMaterial.SetVectorArray("_linePair", linePair);
 
         // Draw 35 body topology lines.
-        poseMaterial.SetPass(0);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, BODY_LINE_NUM);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 0, MeshTopology.Triangles, 6, BODY_LINE_NUM);
 
         // Draw 33 landmark points.
-        poseMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
-
-        
-        // 3D rendering
-
-        // Set predicted pose world landmark results.
-        poseMaterial.SetBuffer("_worldVertices", motionCapture.poseLandmarkWorldBuffer);
-        // Set pose landmark counts.
-        poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
-        poseMaterial.SetFloat("_humanExistThreshold", humanPoseThreshold);
-        poseMaterial.SetVectorArray("_linePair", linePair);
-        poseMaterial.SetMatrix("_invViewMatrix", cam.worldToCameraMatrix.inverse);
-
-        // Draw 35 world body topology lines.
-        poseMaterial.SetPass(2);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, BODY_LINE_NUM);
-
-        // Draw 33 world landmark points.
-        poseMaterial.SetPass(3);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 1, MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
     }
 
     void FaceRender(){
@@ -121,28 +109,27 @@ public class Visuallizer : MonoBehaviour
 
         // FaceMesh
         // Set inferenced face landmark results.
+        faceMeshMaterialPropertyBlock.SetBuffer("_vertices", motionCapture.faceVertexBuffer);
+        commandBuffer.DrawMesh(faceLineTemplateMesh, Matrix4x4.zero, faceMeshMaterial, 0, 0, faceMeshMaterialPropertyBlock);
         faceMeshMaterial.SetBuffer("_vertices", motionCapture.faceVertexBuffer);
-        faceMeshMaterial.SetPass(0);
-        Graphics.DrawMeshNow(faceLineTemplateMesh, Vector3.zero, Quaternion.identity);
 
         // Left eye
         // Set inferenced eye landmark results.
         faceMeshMaterial.SetBuffer("_vertices", motionCapture.leftEyeVertexBuffer);
         faceMeshMaterial.SetVector("_eyeColor", Color.yellow);
-        faceMeshMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1);
 
         // Right eye
         // Set inferenced eye landmark results.
         faceMeshMaterial.SetBuffer("_vertices", motionCapture.rightEyeVertexBuffer);
         faceMeshMaterial.SetVector("_eyeColor", Color.cyan);
-        faceMeshMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1);
     }
 
     void HandRender(bool isRight){
         var w = image.rectTransform.rect.width;
         var h = image.rectTransform.rect.height;
+        var handMaterial = isRight ? rightHandMaterial : leftHandMaterial;
         handMaterial.SetVector("_uiScale", new Vector2(w, h));
         handMaterial.SetVector("_pointColor", isRight ? Color.cyan : Color.yellow);
         handMaterial.SetFloat("_handScoreThreshold", handScoreThreshold);
@@ -150,16 +137,15 @@ public class Visuallizer : MonoBehaviour
         handMaterial.SetBuffer("_vertices", isRight ? motionCapture.rightHandVertexBuffer : motionCapture.leftHandVertexBuffer);
 
         // Draw 21 key point circles.
-        handMaterial.SetPass(0);
-        Graphics.DrawProceduralNow(MeshTopology.Triangles, 96, motionCapture.handVertexCount);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 0, MeshTopology.Triangles, 96, motionCapture.handVertexCount);
 
         // Draw skeleton lines.
-        handMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Lines, 2, 4 * 5 + 1);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 1, MeshTopology.Lines, 2, 4 * 5 + 1);
     }
 
     void OnDestroy(){
         // Must call Dispose method when no longer in use.
         motionCapture.Dispose();
+        predictResultCamera.RemoveAllCommandBuffers();
     }
 }

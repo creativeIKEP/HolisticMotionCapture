@@ -3,12 +3,16 @@
     {
       "name": "Keijiro",
       "url": "https://registry.npmjs.com",
-      "scopes": [ "jp.keijiro" ]
+      "scopes": [
+        "jp.keijiro"
+      ]
     },
     {
       "name": "creativeikep",
       "url": "https://registry.npmjs.com",
-      "scopes": [ "jp.ikep" ]
+      "scopes": [
+        "jp.ikep"
+      ]
     }
   ],
   "dependencies": {
@@ -55,6 +59,6 @@
     "com.vrmc.gltf": "https://github.com/vrm-c/UniVRM.git?path=/Assets/UniGLTF#v0.85.0",
     "com.vrmc.univrm": "https://github.com/vrm-c/UniVRM.git?path=/Assets/VRM#v0.85.0",
     "com.vrmc.vrm": "https://github.com/vrm-c/UniVRM.git?path=/Assets/VRM10#v0.85.0",
-    "jp.ikep.mediapipe.holistic": "1.0.1"
+    "jp.ikep.mediapipe.holistic": "1.1.0"
   }
 }

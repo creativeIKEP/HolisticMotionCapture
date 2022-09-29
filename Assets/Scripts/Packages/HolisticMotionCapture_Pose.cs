@@ -126,8 +126,9 @@ partial class HolisticMotionCapture
         var hipScore = (RotatePoseLandmark(leftHipIndex).w + RotatePoseLandmark(rightHipIndex).w) * 0.5f;
         if(hipScore > scoreThreshold && !isUpperBodyOnly){
             var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation *  poseJoints[HumanBodyBones.Hips].initRotation;
-            var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Hips);
-            hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, hipRotation, hipScore);
+            var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
+            hipTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation *  Quaternion.Lerp(hipTransform.rotation, hipRotation, hipScore);
+            avatar.bodyRotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation *  Quaternion.Lerp(hipTransform.rotation, hipRotation, hipScore);
         }
         
         var upperBodyBones = new HumanBodyBones[]{
@@ -148,20 +149,6 @@ partial class HolisticMotionCapture
         rotatedBones.AddRange(upperBodyBones);
         if(!isUpperBodyOnly) rotatedBones.AddRange(lowerBodyBones);
 
-        // Rotate arms and legs.
-        foreach(var bone in rotatedBones){
-            var poseJoint = poseJoints[bone];
-            var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
-            var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
-            float score = RotatePoseLandmark(boneLandmarkIndex).w;
-            if(score < scoreThreshold) continue;
-
-            Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
-            var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
-            var boneTrans = avatar.GetBoneTransform(bone);
-            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, rot, score);
-        }
-
         // Rotate head with pose landmark.
         var leftEyeLandmark = RotatePoseLandmark(2);
         var rightEyeLandmark = RotatePoseLandmark(5);
@@ -174,12 +161,26 @@ partial class HolisticMotionCapture
         if(headScore > scoreThreshold){
             var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation *  poseJoints[HumanBodyBones.Head].initRotation;
             if(isUpperBodyOnly){
-                var hipRotation = Quaternion.Lerp(poseJoints[HumanBodyBones.Spine].initRotation, headRotation, spineRotPercentage);
-                var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-                hipTransform.rotation = hipRotation;
+                var spineRotation = headRotation;
+                var spineTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
+                spineTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * spineRotation;
             }
             var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
-            headTransform.rotation = Quaternion.Lerp(headTransform.rotation, headRotation, headScore);
+            headTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(headTransform.rotation, headRotation, headScore);
+        }
+
+        // Rotate arms and legs.
+        foreach(var bone in rotatedBones){
+            var poseJoint = poseJoints[bone];
+            var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
+            var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
+            float score = RotatePoseLandmark(boneLandmarkIndex).w;
+            if(score < scoreThreshold) continue;
+
+            Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
+            var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
+            var boneTrans = avatar.GetBoneTransform(bone);
+            boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, score);
         }
     }
 

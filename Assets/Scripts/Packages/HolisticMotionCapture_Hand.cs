@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -96,7 +95,7 @@ partial class HolisticMotionCapture{
 
         var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
         var wristTransform = avatar.GetBoneTransform(wrist);
-        wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
+        wristTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
         
         var rotatedBones = new HumanBodyBones[]{
             HumanBodyBones.LeftThumbProximal + offset, HumanBodyBones.LeftThumbIntermediate + offset, HumanBodyBones.LeftThumbDistal + offset,
@@ -118,7 +117,7 @@ partial class HolisticMotionCapture{
 
             var rot = Quaternion.LookRotation(-toChild, handForward) * handJoints[bone].inverseRotation * handJoints[bone].initRotation;
             var boneTrans = avatar.GetBoneTransform(bone);
-            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, rot, wristScore);
+            boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, wristScore);
         }
     }
 

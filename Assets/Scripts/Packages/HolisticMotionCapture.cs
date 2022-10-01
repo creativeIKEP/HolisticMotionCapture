@@ -7,19 +7,12 @@ using Mediapipe.BlazePose;
 
 public partial class HolisticMotionCapture : System.IDisposable
 {
-    public int poseVertexCount => holisticPipeline.poseVertexCount;
-    public ComputeBuffer poseLandmarkBuffer => holisticPipeline.poseLandmarkBuffer;
-    public ComputeBuffer poseLandmarkWorldBuffer => holisticPipeline.poseLandmarkWorldBuffer;
-    public int faceVertexCount => holisticPipeline.faceVertexCount;
-    public ComputeBuffer faceVertexBuffer => holisticPipeline.faceVertexBuffer;
-    public int eyeVertexCount => holisticPipeline.eyeVertexCount;
-    public ComputeBuffer leftEyeVertexBuffer => holisticPipeline.leftEyeVertexBuffer;
-    public ComputeBuffer rightEyeVertexBuffer => holisticPipeline.rightEyeVertexBuffer;
-    public int handVertexCount => holisticPipeline.handVertexCount;
-    public ComputeBuffer leftHandVertexBuffer => holisticPipeline.leftHandVertexBuffer;
-    public ComputeBuffer rightHandVertexBuffer => holisticPipeline.rightHandVertexBuffer;
-
-    HolisticPipeline holisticPipeline;
+    HolisticPipeline _holisticPipeline;
+    public HolisticPipeline holisticPipeline{
+        get {return this._holisticPipeline;}
+        private set {this._holisticPipeline = value;}
+    }
+    
     Animator avatar;
 
     public HolisticMotionCapture(Animator avatarAnimator, BlazePoseModel blazePoseModel = BlazePoseModel.full){

@@ -101,7 +101,7 @@ partial class HolisticMotionCapture
         if(mocapType == HolisticMocapType.face_only) return;
 
         // Reset pose if huamn is not visible.
-        if(holisticPipeline.GetPoseWorldLandmark(poseVertexCount).x < scoreThreshold){
+        if(holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold){
             ResetPose();
             return;
         }

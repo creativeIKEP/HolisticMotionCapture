@@ -24,7 +24,7 @@ public class Visuallizer : MonoBehaviour
     HolisticMotionCapture motionCapture;
     Material poseMaterial;
     Material faceMeshMaterial;
-    MaterialPropertyBlock faceMeshMaterialPropertyBlock;
+    MaterialPropertyBlock faceMaterialPropertyBlock;
     Material leftHandMaterial;
     Material rightHandMaterial;
     CommandBuffer commandBuffer;
@@ -49,7 +49,7 @@ public class Visuallizer : MonoBehaviour
 
         poseMaterial = new Material(poseShader);
         faceMeshMaterial = new Material(faceShader);
-        faceMeshMaterialPropertyBlock = new MaterialPropertyBlock();
+        faceMaterialPropertyBlock = new MaterialPropertyBlock();
         leftHandMaterial = new Material(handShader);
         rightHandMaterial = new Material(handShader);
         commandBuffer = new CommandBuffer();
@@ -84,14 +84,19 @@ public class Visuallizer : MonoBehaviour
     }
 
     void PoseRender(){
+        float score = motionCapture.holisticPipeline.GetPoseLandmark(motionCapture.holisticPipeline.poseVertexCount).x;
+        if(score < humanPoseThreshold) {
+            return;
+        }
+
         var w = image.rectTransform.rect.width;
         var h = image.rectTransform.rect.height;
 
         // Set inferenced pose landmark results.
-        poseMaterial.SetBuffer("_vertices", motionCapture.poseLandmarkBuffer);
+        poseMaterial.SetBuffer("_vertices", motionCapture.holisticPipeline.poseLandmarkBuffer);
         // Set pose landmark counts.
-        poseMaterial.SetInt("_keypointCount", motionCapture.poseVertexCount);
-        poseMaterial.SetFloat("_humanExistThreshold", humanPoseThreshold);
+        poseMaterial.SetInt("_keypointCount", motionCapture.holisticPipeline.poseVertexCount);
+        poseMaterial.SetFloat("_poseThreshold", humanPoseThreshold);
         poseMaterial.SetVector("_uiScale", new Vector2(w, h));
         poseMaterial.SetVectorArray("_linePair", linePair);
 
@@ -99,34 +104,42 @@ public class Visuallizer : MonoBehaviour
         commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 0, MeshTopology.Triangles, 6, BODY_LINE_NUM);
 
         // Draw 33 landmark points.
-        commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 1, MeshTopology.Triangles, 6, motionCapture.poseVertexCount);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 1, MeshTopology.Triangles, 6, motionCapture.holisticPipeline.poseVertexCount);
     }
 
     void FaceRender(){
+        if(motionCapture.holisticPipeline.faceDetectionScore < faceScoreThreshold) {
+            return;
+        }
+
         var w = image.rectTransform.rect.width;
         var h = image.rectTransform.rect.height;
         faceMeshMaterial.SetVector("_uiScale", new Vector2(w, h));
 
         // FaceMesh
         // Set inferenced face landmark results.
-        faceMeshMaterialPropertyBlock.SetBuffer("_vertices", motionCapture.faceVertexBuffer);
-        commandBuffer.DrawMesh(faceLineTemplateMesh, Matrix4x4.zero, faceMeshMaterial, 0, 0, faceMeshMaterialPropertyBlock);
-        faceMeshMaterial.SetBuffer("_vertices", motionCapture.faceVertexBuffer);
+        faceMaterialPropertyBlock.SetBuffer("_vertices", motionCapture.holisticPipeline.faceVertexBuffer);
+        commandBuffer.DrawMesh(faceLineTemplateMesh, Matrix4x4.zero, faceMeshMaterial, 0, 0, faceMaterialPropertyBlock);
 
         // Left eye
         // Set inferenced eye landmark results.
-        faceMeshMaterial.SetBuffer("_vertices", motionCapture.leftEyeVertexBuffer);
-        faceMeshMaterial.SetVector("_eyeColor", Color.yellow);
-        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1);
+        faceMaterialPropertyBlock.SetBuffer("_vertices", motionCapture.holisticPipeline.leftEyeVertexBuffer);
+        faceMaterialPropertyBlock.SetVector("_eyeColor", Color.yellow);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1, faceMaterialPropertyBlock);
 
         // Right eye
         // Set inferenced eye landmark results.
-        faceMeshMaterial.SetBuffer("_vertices", motionCapture.rightEyeVertexBuffer);
-        faceMeshMaterial.SetVector("_eyeColor", Color.cyan);
-        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1);
+        faceMaterialPropertyBlock.SetBuffer("_vertices", motionCapture.holisticPipeline.rightEyeVertexBuffer);
+        faceMaterialPropertyBlock.SetVector("_eyeColor", Color.cyan);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1, faceMaterialPropertyBlock);
     }
 
     void HandRender(bool isRight){
+        float score = isRight ? motionCapture.holisticPipeline.rightHandDetectionScore : motionCapture.holisticPipeline.leftHandDetectionScore;
+        if(score < handScoreThreshold) {
+            return;
+        }
+
         var w = image.rectTransform.rect.width;
         var h = image.rectTransform.rect.height;
         var handMaterial = isRight ? rightHandMaterial : leftHandMaterial;
@@ -134,10 +147,10 @@ public class Visuallizer : MonoBehaviour
         handMaterial.SetVector("_pointColor", isRight ? Color.cyan : Color.yellow);
         handMaterial.SetFloat("_handScoreThreshold", handScoreThreshold);
         // Set inferenced hand landmark results.
-        handMaterial.SetBuffer("_vertices", isRight ? motionCapture.rightHandVertexBuffer : motionCapture.leftHandVertexBuffer);
+        handMaterial.SetBuffer("_vertices", isRight ? motionCapture.holisticPipeline.rightHandVertexBuffer : motionCapture.holisticPipeline.leftHandVertexBuffer);
 
         // Draw 21 key point circles.
-        commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 0, MeshTopology.Triangles, 96, motionCapture.handVertexCount);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 0, MeshTopology.Triangles, 96, motionCapture.holisticPipeline.handVertexCount);
 
         // Draw skeleton lines.
         commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 1, MeshTopology.Lines, 2, 4 * 5 + 1);

@@ -83,6 +83,7 @@ partial class HolisticMotionCapture{
         int offset = isLeft ? 0 : 15;
         var wristScore = isLeft ? holisticPipeline.leftHandDetectionScore : holisticPipeline.rightHandDetectionScore;
         if(wristScore < scoreThreshold){
+            ResetHand();
             return;
         }
 
@@ -119,6 +120,15 @@ partial class HolisticMotionCapture{
             var boneTrans = avatar.GetBoneTransform(bone);
             boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, wristScore);
         }
+    }
+
+    void ResetHand(){
+        foreach(var handJoint in handJoints){
+            var boneTrans = avatar.GetBoneTransform(handJoint.Key);
+            boneTrans.localRotation = handJoints[handJoint.Key].initRotation;
+        }
+        avatar.GetBoneTransform(HumanBodyBones.LeftHand).localRotation = Quaternion.Euler(0, 0, 0);
+        avatar.GetBoneTransform(HumanBodyBones.RightHand).localRotation = Quaternion.Euler(0, 0, 0);
     }
 
     Vector4 RotateHandLandmark(int index, bool isLeft){

@@ -46,4 +46,9 @@ public partial class HolisticMotionCapture : System.IDisposable
         HandRender(mocapType, false, handScoreThreshold);
         FaceRender(mocapType, faceScoreThreshold, isSeparateEyeBlink);
     }
+
+    public void ResetAvatar() {
+        ResetPose();
+        ResetHand();
+    }
 }

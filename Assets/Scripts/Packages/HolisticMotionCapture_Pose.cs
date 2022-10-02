@@ -97,7 +97,7 @@ partial class HolisticMotionCapture
         poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
-    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly){
+    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, bool isFixedApose){
         if(mocapType == HolisticMocapType.face_only) return;
 
         // Reset pose if huamn is not visible.
@@ -182,6 +182,18 @@ partial class HolisticMotionCapture
             var boneTrans = avatar.GetBoneTransform(bone);
             boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, score);
         }
+
+        if(isFixedApose) {
+            ToAposeArm();
+        }
+    }
+
+    void ToAposeArm(){
+        float upperArmAngle = 60;
+        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.LeftLowerArm).localRotation = Quaternion.Euler(0, 0, 0);
+        avatar.GetBoneTransform(HumanBodyBones.RightLowerArm).localRotation = Quaternion.Euler(0, 0, 0);
     }
 
     void ResetPose(){
@@ -189,6 +201,7 @@ partial class HolisticMotionCapture
             var boneTrans = avatar.GetBoneTransform(poseJoint.Key);
             boneTrans.rotation = poseJoints[poseJoint.Key].initRotation;
         }
+        ToAposeArm();
     }
 
     Vector3 TriangleNormal(Vector3 a, Vector3 b, Vector3 c)

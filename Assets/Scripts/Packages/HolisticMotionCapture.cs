@@ -34,13 +34,14 @@ public partial class HolisticMotionCapture : System.IDisposable
         float faceScoreThreshold = 0.5f,
         bool isSeparateEyeBlink = false,
         bool isUpperBodyOnly = false,
+        bool isFixedApose = false,
         HolisticMocapType mocapType = HolisticMocapType.full,
         BlazePoseModel blazePoseModel = BlazePoseModel.full,
         float poseDetectionThreshold = 0.75f,
         float poseDetectionIouThreshold = 0.3f)
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-        PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly);
+        PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, isFixedApose);
         HandRender(mocapType, true, handScoreThreshold);
         HandRender(mocapType, false, handScoreThreshold);
         FaceRender(mocapType, faceScoreThreshold, isSeparateEyeBlink);

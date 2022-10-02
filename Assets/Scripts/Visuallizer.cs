@@ -10,6 +10,7 @@ public class Visuallizer : MonoBehaviour
     [SerializeField] RawImage image;
     [SerializeField] bool isSeparateEyeBlink = false;
     [SerializeField] bool isUpperBodyOnly = false;
+    [SerializeField] bool isFixedApose = false;
     [SerializeField] Shader poseShader;
     [SerializeField, Range(0, 1)] float humanPoseThreshold = 0.5f;
     [SerializeField] Shader faceShader;
@@ -59,7 +60,7 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, holisticMocapType);
+        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, isFixedApose, holisticMocapType);
         SetCommandBuffer();
     }
 

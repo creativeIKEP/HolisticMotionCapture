@@ -75,7 +75,7 @@ partial class HolisticMotionCapture{
     }
 
     void HandRender(HolisticMocapType mocapType, bool isLeft, float scoreThreshold){
-        if(mocapType != HolisticMocapType.full && mocapType == HolisticMocapType.pose_and_hand){
+        if(mocapType != HolisticMocapType.full && mocapType != HolisticMocapType.pose_and_hand){
             return;
         }
 

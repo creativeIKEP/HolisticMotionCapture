@@ -49,6 +49,7 @@ public partial class HolisticMotionCapture : System.IDisposable
 
     public void ResetAvatar() {
         ResetPose();
-        ResetHand();
+        ResetHand(true);
+        ResetHand(false);
     }
 }

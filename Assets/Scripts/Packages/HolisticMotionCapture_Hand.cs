@@ -83,7 +83,7 @@ partial class HolisticMotionCapture{
         int offset = isLeft ? 0 : 15;
         var wristScore = isLeft ? holisticPipeline.leftHandDetectionScore : holisticPipeline.rightHandDetectionScore;
         if(wristScore < scoreThreshold){
-            ResetHand();
+            ResetHand(isLeft);
             return;
         }
 
@@ -97,16 +97,8 @@ partial class HolisticMotionCapture{
         var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
         var wristTransform = avatar.GetBoneTransform(wrist);
         wristTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
-        
-        var rotatedBones = new HumanBodyBones[]{
-            HumanBodyBones.LeftThumbProximal + offset, HumanBodyBones.LeftThumbIntermediate + offset, HumanBodyBones.LeftThumbDistal + offset,
-            HumanBodyBones.LeftIndexProximal + offset, HumanBodyBones.LeftIndexIntermediate + offset, HumanBodyBones.LeftIndexDistal + offset,
-            HumanBodyBones.LeftMiddleProximal + offset, HumanBodyBones.LeftMiddleIntermediate + offset, HumanBodyBones.LeftMiddleDistal + offset,
-            HumanBodyBones.LeftRingProximal + offset, HumanBodyBones.LeftRingIntermediate + offset, HumanBodyBones.LeftRingDistal + offset,
-            HumanBodyBones.LeftLittleProximal + offset, HumanBodyBones.LeftLittleIntermediate + offset, HumanBodyBones.LeftLittleDistal + offset
-        };
 
-        foreach(var bone in rotatedBones){
+        foreach(var bone in getPerHandRotatedBones(isLeft)){
             var handJoint = handJoints[bone];
             var boneLandmarkIndex = BoneToHolisticIndex.handTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.handTable[handJoint.childBone];
@@ -122,13 +114,26 @@ partial class HolisticMotionCapture{
         }
     }
 
-    void ResetHand(){
-        foreach(var handJoint in handJoints){
-            var boneTrans = avatar.GetBoneTransform(handJoint.Key);
-            boneTrans.localRotation = handJoints[handJoint.Key].initRotation;
+    void ResetHand(bool isLeft){
+        foreach(var rotatedBone in getPerHandRotatedBones(isLeft)){
+            var handJoint = handJoints[rotatedBone];
+            var boneTrans = avatar.GetBoneTransform(rotatedBone);
+            boneTrans.localRotation = handJoint.initRotation;
         }
-        avatar.GetBoneTransform(HumanBodyBones.LeftHand).localRotation = Quaternion.Euler(0, 0, 0);
-        avatar.GetBoneTransform(HumanBodyBones.RightHand).localRotation = Quaternion.Euler(0, 0, 0);
+        if(isLeft) avatar.GetBoneTransform(HumanBodyBones.LeftHand).localRotation = Quaternion.Euler(0, 0, 0);
+        else avatar.GetBoneTransform(HumanBodyBones.RightHand).localRotation = Quaternion.Euler(0, 0, 0);
+    }
+
+    HumanBodyBones[] getPerHandRotatedBones(bool isLeft) {
+        int offset = isLeft ? 0 : 15;
+        var rotatedBones = new HumanBodyBones[]{
+            HumanBodyBones.LeftThumbProximal + offset, HumanBodyBones.LeftThumbIntermediate + offset, HumanBodyBones.LeftThumbDistal + offset,
+            HumanBodyBones.LeftIndexProximal + offset, HumanBodyBones.LeftIndexIntermediate + offset, HumanBodyBones.LeftIndexDistal + offset,
+            HumanBodyBones.LeftMiddleProximal + offset, HumanBodyBones.LeftMiddleIntermediate + offset, HumanBodyBones.LeftMiddleDistal + offset,
+            HumanBodyBones.LeftRingProximal + offset, HumanBodyBones.LeftRingIntermediate + offset, HumanBodyBones.LeftRingDistal + offset,
+            HumanBodyBones.LeftLittleProximal + offset, HumanBodyBones.LeftLittleIntermediate + offset, HumanBodyBones.LeftLittleDistal + offset
+        };
+        return rotatedBones;
     }
 
     Vector4 RotateHandLandmark(int index, bool isLeft){

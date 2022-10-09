@@ -476,13 +476,14 @@ MonoBehaviour:
   image: {fileID: 381058041}
   isSeparateEyeBlink: 0
   isUpperBodyOnly: 1
+  lerpPercentage: 0.3
   poseShader: {fileID: 4800000, guid: c8fe6886e54b6b842bf572852e80b51d, type: 3}
-  humanPoseThreshold: 0.8
+  humanPoseThreshold: 0.5
   faceShader: {fileID: 4800000, guid: 7f88ef98500ae914280808663a89b160, type: 3}
   faceLineTemplateMesh: {fileID: 4300000, guid: 4d1b450bb6d281641af6c72e8b37cfcb, type: 2}
-  faceScoreThreshold: 0.8
+  faceScoreThreshold: 0.5
   handShader: {fileID: 4800000, guid: 1c45c99fd2605fb48b7636b731714bf1, type: 3}
-  handScoreThreshold: 0.8
+  handScoreThreshold: 0.5
   holisticMocapType: 0
   avatarAnimator: {fileID: 413382256}
 --- !u!114 &1587756040
@@ -585,8 +586,8 @@ Camera:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1
-    height: 1
+    width: 0.3
+    height: 0.3
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -598,7 +599,7 @@ Camera:
     m_Bits: 32
   m_RenderingPath: 1
   m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 1
+  m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 0
   m_AllowMSAA: 0

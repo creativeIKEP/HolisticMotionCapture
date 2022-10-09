@@ -7,10 +7,14 @@ partial class HolisticMotionCapture
     #region  private variables
     Dictionary<HumanBodyBones, Joint> poseJoints;
     bool isUpperBodyOnly;
-    float spineRotPercentage = 0.6f;
     #endregion
 
     void PoseInit(){
+        // default: T pose to A pose
+        float upperArmAngle = 60;
+        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
+
         HumanBodyBones[] hipsToHead = new HumanBodyBones[]{HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, HumanBodyBones.Neck, HumanBodyBones.Head};
         HumanBodyBones[] leftShoulderToHand = new HumanBodyBones[]{
             HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, 
@@ -97,18 +101,18 @@ partial class HolisticMotionCapture
         poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
-    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, bool isFixedApose){
+    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, float lerpPercentage){
         if(mocapType == HolisticMocapType.face_only) return;
 
         // Reset pose if huamn is not visible.
         if(holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold){
-            ResetPose();
+            ResetPose(lerpPercentage);
             return;
         }
 
         // Reset pose and update pose in below if mode was changed.
         if(this.isUpperBodyOnly != isUpperBodyOnly){
-            ResetPose();
+            ResetPose(lerpPercentage);
             this.isUpperBodyOnly = isUpperBodyOnly;
         }
 
@@ -127,8 +131,8 @@ partial class HolisticMotionCapture
         if(hipScore > scoreThreshold && !isUpperBodyOnly){
             var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation *  poseJoints[HumanBodyBones.Hips].initRotation;
             var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-            hipTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation *  Quaternion.Lerp(hipTransform.rotation, hipRotation, hipScore);
-            avatar.bodyRotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation *  Quaternion.Lerp(hipTransform.rotation, hipRotation, hipScore);
+            hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * hipRotation, lerpPercentage);
+            avatar.bodyRotation = Quaternion.Lerp(avatar.bodyRotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * hipRotation, lerpPercentage);
         }
         
         var upperBodyBones = new HumanBodyBones[]{
@@ -163,10 +167,10 @@ partial class HolisticMotionCapture
             if(isUpperBodyOnly){
                 var spineRotation = headRotation;
                 var spineTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-                spineTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * spineRotation;
+                spineTransform.rotation = Quaternion.Lerp(spineTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * spineRotation, lerpPercentage);
             }
             var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
-            headTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(headTransform.rotation, headRotation, headScore);
+            headTransform.rotation = Quaternion.Lerp(headTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * headRotation, lerpPercentage);
         }
 
         // Rotate arms and legs.
@@ -175,33 +179,23 @@ partial class HolisticMotionCapture
             var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
             float score = RotatePoseLandmark(boneLandmarkIndex).w;
-            if(score < scoreThreshold) continue;
 
             Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
             var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
+            if(score < scoreThreshold) {
+                rot = poseJoints[bone].initRotation;
+            }
             var boneTrans = avatar.GetBoneTransform(bone);
-            boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, score);
-        }
-
-        if(isFixedApose) {
-            ToAposeArm();
+            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * rot, lerpPercentage);
         }
     }
 
-    void ToAposeArm(){
-        float upperArmAngle = 60;
-        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
-        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
-        avatar.GetBoneTransform(HumanBodyBones.LeftLowerArm).localRotation = Quaternion.Euler(0, 0, 0);
-        avatar.GetBoneTransform(HumanBodyBones.RightLowerArm).localRotation = Quaternion.Euler(0, 0, 0);
-    }
-
-    void ResetPose(){
+    void ResetPose(float lerpPercentage){
         foreach(var poseJoint in poseJoints){
+            if(poseJoint.Key == HumanBodyBones.Hips) continue;
             var boneTrans = avatar.GetBoneTransform(poseJoint.Key);
-            boneTrans.rotation = poseJoints[poseJoint.Key].initRotation;
+            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, poseJoints[poseJoint.Key].initRotation, lerpPercentage);
         }
-        ToAposeArm();
     }
 
     Vector3 TriangleNormal(Vector3 a, Vector3 b, Vector3 c)

@@ -74,7 +74,7 @@ partial class HolisticMotionCapture{
         handJoints[wrist] = new Joint(wrist, wrist, wrist, avatar.GetBoneTransform(wrist).rotation, Quaternion.Inverse(Quaternion.LookRotation(handForward)));
     }
 
-    void HandRender(HolisticMocapType mocapType, bool isLeft, float scoreThreshold){
+    void HandRender(HolisticMocapType mocapType, bool isLeft, float scoreThreshold, float lerpPercentage){
         if(mocapType != HolisticMocapType.full && mocapType != HolisticMocapType.pose_and_hand){
             return;
         }
@@ -83,7 +83,7 @@ partial class HolisticMotionCapture{
         int offset = isLeft ? 0 : 15;
         var wristScore = isLeft ? holisticPipeline.leftHandDetectionScore : holisticPipeline.rightHandDetectionScore;
         if(wristScore < scoreThreshold){
-            ResetHand(isLeft);
+            ResetHand(isLeft, lerpPercentage);
             return;
         }
 
@@ -96,7 +96,7 @@ partial class HolisticMotionCapture{
 
         var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
         var wristTransform = avatar.GetBoneTransform(wrist);
-        wristTransform.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(wristTransform.rotation, wristRotation, wristScore);
+        wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * wristRotation, lerpPercentage);
 
         foreach(var bone in getPerHandRotatedBones(isLeft)){
             var handJoint = handJoints[bone];
@@ -110,18 +110,20 @@ partial class HolisticMotionCapture{
 
             var rot = Quaternion.LookRotation(-toChild, handForward) * handJoints[bone].inverseRotation * handJoints[bone].initRotation;
             var boneTrans = avatar.GetBoneTransform(bone);
-            boneTrans.rotation = avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * Quaternion.Lerp(boneTrans.rotation, rot, wristScore);
+            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * rot, lerpPercentage);
         }
     }
 
-    void ResetHand(bool isLeft){
+    void ResetHand(bool isLeft, float lerpPercentage){
+        var wristBone = isLeft ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+        var wristTrans = avatar.GetBoneTransform(wristBone);
+        wristTrans.rotation = Quaternion.Lerp(wristTrans.rotation, handJoints[wristBone].initRotation, lerpPercentage);
+
         foreach(var rotatedBone in getPerHandRotatedBones(isLeft)){
             var handJoint = handJoints[rotatedBone];
             var boneTrans = avatar.GetBoneTransform(rotatedBone);
-            boneTrans.localRotation = handJoint.initRotation;
+            boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, handJoint.initRotation, lerpPercentage);
         }
-        if(isLeft) avatar.GetBoneTransform(HumanBodyBones.LeftHand).localRotation = Quaternion.Euler(0, 0, 0);
-        else avatar.GetBoneTransform(HumanBodyBones.RightHand).localRotation = Quaternion.Euler(0, 0, 0);
     }
 
     HumanBodyBones[] getPerHandRotatedBones(bool isLeft) {

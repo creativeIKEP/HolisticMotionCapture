@@ -18,8 +18,8 @@ public partial class HolisticMotionCapture : System.IDisposable
     public HolisticMotionCapture(Animator avatarAnimator, BlazePoseModel blazePoseModel = BlazePoseModel.full){
         avatar = avatarAnimator;
         holisticPipeline = new HolisticPipeline(blazePoseModel);
-        PoseInit();
         HandInit();
+        PoseInit();
         FaceInit();
     }
 
@@ -42,14 +42,14 @@ public partial class HolisticMotionCapture : System.IDisposable
     {
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
         PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
-        HandRender(mocapType, true, handScoreThreshold);
-        HandRender(mocapType, false, handScoreThreshold);
+        HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
+        HandRender(mocapType, false, handScoreThreshold, lerpPercentage);
         FaceRender(mocapType, faceScoreThreshold, isSeparateEyeBlink);
     }
 
     public void ResetAvatar(float lerpPercentage = 0.3f) {
         ResetPose(lerpPercentage);
-        ResetHand(true);
-        ResetHand(false);
+        ResetHand(true, lerpPercentage);
+        ResetHand(false, lerpPercentage);
     }
 }

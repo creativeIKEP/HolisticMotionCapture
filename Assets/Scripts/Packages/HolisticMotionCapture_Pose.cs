@@ -165,9 +165,10 @@ partial class HolisticMotionCapture
         if(headScore > scoreThreshold){
             var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation *  poseJoints[HumanBodyBones.Head].initRotation;
             if(isUpperBodyOnly){
-                var spineRotation = headRotation;
+                var spineRotationEulerAngles = headRotation.eulerAngles;
+                var spineRotation = Quaternion.Euler(headRotation.eulerAngles + new Vector3(-20, 0, 0));
                 var spineTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-                spineTransform.rotation = Quaternion.Lerp(spineTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * spineRotation, lerpPercentage);
+                spineTransform.rotation = Quaternion.Lerp(spineTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * spineRotation, lerpPercentage * 0.5f);
             }
             var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
             headTransform.rotation = Quaternion.Lerp(headTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * headRotation, lerpPercentage);

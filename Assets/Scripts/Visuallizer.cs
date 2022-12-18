@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 public class Visuallizer : MonoBehaviour
 {
     [SerializeField] Camera predictResultCamera;
-    [SerializeField] WebCamInput webCamInput;
+    [SerializeField] WebCamCtrlUI webCamInput;
     [SerializeField] RawImage image;
     [SerializeField] bool isSeparateEyeBlink = false;
     [SerializeField] bool isUpperBodyOnly = false;
@@ -59,8 +59,10 @@ public class Visuallizer : MonoBehaviour
 
     void LateUpdate()
     {
-        image.texture = webCamInput.inputImageTexture;
-        motionCapture.AvatarPoseRender(webCamInput.inputImageTexture, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, lerpPercentage, holisticMocapType);
+        var inputImage = webCamInput.webCamImage;
+        if(inputImage == null) return;
+        image.texture = inputImage;
+        motionCapture.AvatarPoseRender(inputImage, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isSeparateEyeBlink, isUpperBodyOnly, lerpPercentage, holisticMocapType);
         SetCommandBuffer();
     }
 

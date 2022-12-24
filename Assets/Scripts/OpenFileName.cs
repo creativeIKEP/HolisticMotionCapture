@@ -79,9 +79,10 @@ public class OpenFileName
     /// このメソッドでダイアログが開く
     /// </summary>
     /// <returns>ファイルが選択されればそのパス、非選択ならnullを返す</returns>
-    public static string ShowDialog()
+    public static string ShowDialog(string extension)
     {
         OpenFileName ofn = new OpenFileName();
+        ofn.filter = "All Files\0*." + extension + "\0\0";
         if (GetOpenFileName(ofn))
         {
             return ofn.file;

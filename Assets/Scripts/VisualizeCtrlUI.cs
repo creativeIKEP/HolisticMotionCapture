@@ -2,7 +2,6 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using SFB;
 using VRM;
 
 public class VisualizeCtrlUI : MonoBehaviour
@@ -42,12 +41,12 @@ public class VisualizeCtrlUI : MonoBehaviour
     }
 
     public async void VrmFileLoad(){
-        var extensions = new [] {
-            new ExtensionFilter("All Files", "vrm"),
-        };
-        var path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false);
-        if(path.Length <= 0) return;
-        var instance = await VrmUtility.LoadAsync(path[0]);
+        string path = OpenFileName.ShowDialog("vrm");
+        if(path == null) return;
+        var extension = Path.GetExtension(path).ToLower();
+        if(extension != ".vrm") return;
+
+        var instance = await VrmUtility.LoadAsync(path);
         instance.ShowMeshes();
         visuallizer.SetAnimator(instance.GetComponent<Animator>());
     }
@@ -68,13 +67,12 @@ public class VisualizeCtrlUI : MonoBehaviour
     }
 
     public void NewImageLoad(){
-        string path = OpenFileName.ShowDialog();
+        string path = OpenFileName.ShowDialog("png");
+        if(path == null) return;
         byte[] bytes = File.ReadAllBytes(path);
         Texture2D texture = new Texture2D(1, 1);
         bool isLoadSuccess = texture.LoadImage(bytes);
-        var extension = Path.GetExtension(path).ToLower();
-        bool isImageFile = (extension == ".png" || extension == ".jpg" || extension == ".jpeg");
-        if(!isLoadSuccess || !isImageFile) return;
+        if(!isLoadSuccess) return;
 
         backGroundTexture.texture = texture;
 

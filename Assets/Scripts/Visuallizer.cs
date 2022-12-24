@@ -171,8 +171,9 @@ public class Visuallizer : MonoBehaviour
 
     void OnDestroy(){
         // Must call Dispose method when no longer in use.
-        motionCapture.Dispose();
-
+        if(motionCapture != null){
+            motionCapture.Dispose();
+        }
         commandBuffer.Release();
     }
 }

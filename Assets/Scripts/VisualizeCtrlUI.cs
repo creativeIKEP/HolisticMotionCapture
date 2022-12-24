@@ -2,9 +2,12 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SFB;
+using VRM;
 
 public class VisualizeCtrlUI : MonoBehaviour
 {
+    [SerializeField] Visuallizer visuallizer;
     [SerializeField] RawImage backGroundTexture;
     [SerializeField] Dropdown backTextureSelect;
     [SerializeField] Toggle mirrorModeToggle;
@@ -36,6 +39,17 @@ public class VisualizeCtrlUI : MonoBehaviour
         }
         backTextureSelect.ClearOptions();
         backTextureSelect.AddOptions(backTextureSelectOptions);
+    }
+
+    public async void VrmFileLoad(){
+        var extensions = new [] {
+            new ExtensionFilter("All Files", "vrm"),
+        };
+        var path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false);
+        if(path.Length <= 0) return;
+        var instance = await VrmUtility.LoadAsync(path[0]);
+        instance.ShowMeshes();
+        visuallizer.SetAnimator(instance.GetComponent<Animator>());
     }
 
     public void ChangeBackTexture(){

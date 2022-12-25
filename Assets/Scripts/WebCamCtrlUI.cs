@@ -49,9 +49,10 @@ public class WebCamCtrlUI : MonoBehaviour
             webCam = new WebCamInput(webCamName, w, h);
         }
 
-        var size = webCam.CaptureStart();
-        widthInput.text = size.x.ToString();
-        heightInput.text = size.y.ToString();
+        StartCoroutine(webCam.CaptureStart((size) => {
+            widthInput.text = size.x.ToString();
+            heightInput.text = size.y.ToString();
+        }));
     }
 
     void OnApplicationQuit(){

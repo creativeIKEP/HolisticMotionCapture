@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class WebCamInput
 {
@@ -21,10 +22,13 @@ public class WebCamInput
         webCamTexture = new WebCamTexture(webCamName, w, h);
     }
 
-    public Vector2 CaptureStart(){
+    public IEnumerator CaptureStart(System.Action<Vector2> callback){
         webCamTexture.Play();
+        while(webCamTexture.width < 100) {
+            yield return null;
+        }
         inputRT = new RenderTexture(webCamTexture.width, webCamTexture.height, 0);
-        return new Vector2(webCamTexture.width, webCamTexture.height);
+        callback(new Vector2(webCamTexture.width, webCamTexture.height));
     }
 
     public void CaptureStop(){
@@ -34,6 +38,7 @@ public class WebCamInput
 
     public void UpdateTexture()
     {
+        if(webCamTexture == null || inputRT == null) return;
         if(!webCamTexture.didUpdateThisFrame) return;
 
         var aspect1 = (float)webCamTexture.width / webCamTexture.height;

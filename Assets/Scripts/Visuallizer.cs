@@ -18,9 +18,9 @@ public class Visuallizer : MonoBehaviour
     [SerializeField, Range(0, 1)] float faceScoreThreshold = 0.5f;
     [SerializeField] Shader handShader;
     [SerializeField, Range(0, 1)] float handScoreThreshold = 0.5f;
-    // Select inference type with pull down on the Unity Editor.
-    [SerializeField] HolisticMocapType holisticMocapType = HolisticMocapType.full;
+    
 
+    HolisticMocapType holisticMocapType = HolisticMocapType.full;
     Animator avatarAnimator;
     HolisticMotionCapture motionCapture;
     Material poseMaterial;
@@ -53,17 +53,6 @@ public class Visuallizer : MonoBehaviour
         rightHandMaterial = new Material(handShader);
         commandBuffer = new CommandBuffer();
         predictResultCamera.AddCommandBuffer(CameraEvent.AfterEverything, commandBuffer);
-    }
-
-    public void SetAnimator(Animator avatar){
-        if(avatarAnimator != null) {
-            Destroy(avatarAnimator.gameObject);
-        }
-        if(motionCapture != null) {
-            motionCapture.Dispose();
-        }
-        avatarAnimator = avatar;
-        motionCapture = new HolisticMotionCapture(avatar);
     }
 
     void LateUpdate()
@@ -175,5 +164,20 @@ public class Visuallizer : MonoBehaviour
             motionCapture.Dispose();
         }
         commandBuffer.Release();
+    }
+
+    public void SetAnimator(Animator avatar){
+        if(avatarAnimator != null) {
+            Destroy(avatarAnimator.gameObject);
+        }
+        if(motionCapture != null) {
+            motionCapture.Dispose();
+        }
+        avatarAnimator = avatar;
+        motionCapture = new HolisticMotionCapture(avatar);
+    }
+
+    public void SetHolisticMocapType(HolisticMocapType type){
+        holisticMocapType = type;
     }
 }

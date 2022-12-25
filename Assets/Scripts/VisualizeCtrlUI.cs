@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,6 +14,7 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] GameObject unityCaptureUI;
     [SerializeField] Toggle mirrorModeToggle;
     [SerializeField] Toggle unityCaptureToggle;
+    [SerializeField] Dropdown hmcTypeSelect;
     
     readonly string loadedImagePath = "/LoadedImages";
     readonly string backOffName = "None";
@@ -35,6 +37,7 @@ public class VisualizeCtrlUI : MonoBehaviour
         
         CreateImageOptions();
         UnityCaptureSwitched();
+        CreateHolisticMocapTypeOptions();
     }
 
     void CreateImageOptions(){
@@ -50,6 +53,23 @@ public class VisualizeCtrlUI : MonoBehaviour
         }
         backTextureSelect.ClearOptions();
         backTextureSelect.AddOptions(backTextureSelectOptions);
+    }
+    
+    void CreateHolisticMocapTypeOptions(){
+        var holisticMocapTypeList = Enum.GetNames(typeof(HolisticMocapType));
+        var selectOptions = new List<string>();
+        foreach(var type in holisticMocapTypeList){
+            selectOptions.Add(type);
+        }
+        hmcTypeSelect.ClearOptions();
+        hmcTypeSelect.AddOptions(selectOptions);
+
+        var selectedType = (HolisticMocapType)Enum.ToObject(typeof(HolisticMocapType), hmcTypeSelect.value);
+        visuallizer.SetHolisticMocapType(selectedType);
+        hmcTypeSelect.onValueChanged.AddListener(selectValue => {
+            var selectedType = (HolisticMocapType)Enum.ToObject(typeof(HolisticMocapType), selectValue);
+            visuallizer.SetHolisticMocapType(selectedType);
+        });
     }
 
     public void VrmFileLoad(){

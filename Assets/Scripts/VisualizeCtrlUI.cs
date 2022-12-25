@@ -2,6 +2,7 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SFB;
 using VRM;
 
 public class VisualizeCtrlUI : MonoBehaviour
@@ -51,15 +52,23 @@ public class VisualizeCtrlUI : MonoBehaviour
         backTextureSelect.AddOptions(backTextureSelectOptions);
     }
 
-    public async void VrmFileLoad(){
-        string path = OpenFileName.ShowDialog("vrm");
-        if(path == null) return;
-        var extension = Path.GetExtension(path).ToLower();
-        if(extension != ".vrm") return;
+    public void VrmFileLoad(){
+        var extensions = new []{
+            new ExtensionFilter("VRM Files", "vrm")
+        };
+        StandaloneFileBrowser.OpenFilePanelAsync("Open File", "", extensions, false, async (pathes) => {
+            if(pathes.Length <= 0) return;
+            var path = pathes[0];
+            // cancelしても pathes.Length == 1の時あり
+            if(string.IsNullOrEmpty(path)) return;
 
-        var instance = await VrmUtility.LoadAsync(path);
-        instance.ShowMeshes();
-        visuallizer.SetAnimator(instance.GetComponent<Animator>());
+            var extension = Path.GetExtension(path).ToLower();
+            if(extension != ".vrm") return;
+
+            var instance = await VrmUtility.LoadAsync(path);
+            instance.ShowMeshes();
+            visuallizer.SetAnimator(instance.GetComponent<Animator>());
+        });
     }
 
     public void ChangeBackTexture(){
@@ -78,23 +87,31 @@ public class VisualizeCtrlUI : MonoBehaviour
     }
 
     public void NewImageLoad(){
-        string path = OpenFileName.ShowDialog("png");
-        if(path == null) return;
-        byte[] bytes = File.ReadAllBytes(path);
-        Texture2D texture = new Texture2D(1, 1);
-        bool isLoadSuccess = texture.LoadImage(bytes);
-        if(!isLoadSuccess) return;
+        var extensions = new []{
+            new ExtensionFilter("Image Files", "png", "jpg", "jpeg")
+        };
+        StandaloneFileBrowser.OpenFilePanelAsync("Open File", "", extensions, false, (pathes) => {
+            if(pathes.Length <= 0) return;
+            var path = pathes[0];
+            // cancelしても pathes.Length == 1の時あり
+            if(string.IsNullOrEmpty(path)) return;
 
-        backGroundTexture.texture = texture;
+            byte[] bytes = File.ReadAllBytes(path);
+            Texture2D texture = new Texture2D(1, 1);
+            bool isLoadSuccess = texture.LoadImage(bytes);
+            if(!isLoadSuccess) return;
 
-        var filename = Path.GetFileNameWithoutExtension(path) + ".png";
-        var savePath = Application.persistentDataPath + loadedImagePath + "/" + filename;
-        File.WriteAllBytes(savePath, texture.EncodeToPNG());
+            backGroundTexture.texture = texture;
 
-        var option = new Dropdown.OptionData();
-        option.text = filename;
-        backTextureSelect.options.Add(option);
-        backTextureSelect.value = backTextureSelect.options.Count - 1;
+            var filename = Path.GetFileNameWithoutExtension(path) + ".png";
+            var savePath = Application.persistentDataPath + loadedImagePath + "/" + filename;
+            File.WriteAllBytes(savePath, texture.EncodeToPNG());
+
+            var option = new Dropdown.OptionData();
+            option.text = filename;
+            backTextureSelect.options.Add(option);
+            backTextureSelect.value = backTextureSelect.options.Count - 1;
+        });
     }
 
     public void MirrorModeSwitched(){

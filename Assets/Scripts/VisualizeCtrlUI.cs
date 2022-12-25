@@ -9,12 +9,23 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Visuallizer visuallizer;
     [SerializeField] RawImage backGroundTexture;
     [SerializeField] Dropdown backTextureSelect;
+    [SerializeField] GameObject unityCaptureUI;
     [SerializeField] Toggle mirrorModeToggle;
     [SerializeField] Toggle unityCaptureToggle;
     
     readonly string loadedImagePath = "/LoadedImages";
     readonly string backOffName = "None";
     Texture defaultTexture;
+
+    void Awake() {
+        #if UNITY_STANDALONE_WIN
+        var unityCapture = Camera.main.gameObject.AddComponent<UnityCapture>();
+        unityCapture.ResizeMode = UnityCapture.EResizeMode.LinearResize;
+        unityCapture.HideWarnings = true;
+        #else
+        Destroy(unityCaptureUI);
+        #endif
+    }
 
     void Start(){
         defaultTexture = Texture2D.blackTexture;
@@ -87,12 +98,16 @@ public class VisualizeCtrlUI : MonoBehaviour
     }
 
     public void MirrorModeSwitched(){
+        #if UNITY_STANDALONE_WIN
         var unityCapture = Camera.main.GetComponent<UnityCapture>();
         unityCapture.MirrorMode = mirrorModeToggle.isOn ? UnityCapture.EMirrorMode.MirrorHorizontally : UnityCapture.EMirrorMode.Disabled;
+        #endif
     }
 
     public void UnityCaptureSwitched(){
-        var unityCapture = Camera.main.GetComponent<UnityCapture>();
+        #if UNITY_STANDALONE_WIN
+        var unityCapture = Camera.main.GetComponent<UnityCapture>();        
         unityCapture.enabled = unityCaptureToggle.isOn;
+        #endif
     }
 }

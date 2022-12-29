@@ -558,7 +558,7 @@ GameObject:
   - component: {fileID: 150812164}
   - component: {fileID: 150812165}
   m_Layer: 5
-  m_Name: UnityCaptureOutputToggle
+  m_Name: CaptureOutputToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -634,7 +634,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1587756042}
         m_TargetAssemblyTypeName: VisualizeCtrlUI, Assembly-CSharp
-        m_MethodName: UnityCaptureSwitched
+        m_MethodName: CaptureSwitched
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5858,7 +5858,6 @@ MonoBehaviour:
   faceScoreThreshold: 0.5
   handShader: {fileID: 4800000, guid: 1c45c99fd2605fb48b7636b731714bf1, type: 3}
   handScoreThreshold: 0.5
-  holisticMocapType: 0
 --- !u!114 &1587756040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5903,9 +5902,9 @@ MonoBehaviour:
   visuallizer: {fileID: 1587756039}
   backGroundTexture: {fileID: 759036286}
   backTextureSelect: {fileID: 589837112}
-  unityCaptureUI: {fileID: 1187475018}
+  captureUI: {fileID: 1187475018}
   mirrorModeToggle: {fileID: 1259961777}
-  unityCaptureToggle: {fileID: 150812165}
+  captureToggle: {fileID: 150812165}
   hmcTypeSelect: {fileID: 1893656762}
 --- !u!1 &1640757266
 GameObject:

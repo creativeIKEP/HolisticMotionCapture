@@ -5,15 +5,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using SFB;
 using VRM;
+#if UNITY_STANDALONE_OSX
+using Klak.Syphon;
+#endif
 
 public class VisualizeCtrlUI : MonoBehaviour
 {
     [SerializeField] Visuallizer visuallizer;
     [SerializeField] RawImage backGroundTexture;
     [SerializeField] Dropdown backTextureSelect;
-    [SerializeField] GameObject unityCaptureUI;
+    [SerializeField] GameObject captureUI;
     [SerializeField] Toggle mirrorModeToggle;
-    [SerializeField] Toggle unityCaptureToggle;
+    [SerializeField] Toggle captureToggle;
     [SerializeField] Dropdown hmcTypeSelect;
     
     readonly string loadedImagePath = "/LoadedImages";
@@ -25,8 +28,12 @@ public class VisualizeCtrlUI : MonoBehaviour
         var unityCapture = Camera.main.gameObject.AddComponent<UnityCapture>();
         unityCapture.ResizeMode = UnityCapture.EResizeMode.LinearResize;
         unityCapture.HideWarnings = true;
+        #elif UNITY_STANDALONE_OSX
+        var syphon = Camera.main.gameObject.AddComponent<SyphonServer>();
+        syphon.alphaSupport = true;
+        Destroy(mirrorModeToggle.gameObject);
         #else
-        Destroy(unityCaptureUI);
+        Destroy(captureUI);
         #endif
     }
 
@@ -36,7 +43,7 @@ public class VisualizeCtrlUI : MonoBehaviour
         backGroundTexture.texture.name = backOffName;
         
         CreateImageOptions();
-        UnityCaptureSwitched();
+        CaptureSwitched();
         CreateHolisticMocapTypeOptions();
     }
 
@@ -141,10 +148,13 @@ public class VisualizeCtrlUI : MonoBehaviour
         #endif
     }
 
-    public void UnityCaptureSwitched(){
+    public void CaptureSwitched(){
         #if UNITY_STANDALONE_WIN
         var unityCapture = Camera.main.GetComponent<UnityCapture>();        
-        unityCapture.enabled = unityCaptureToggle.isOn;
+        unityCapture.enabled = captureToggle.isOn;
+        #elif UNITY_STANDALONE_OSX
+        var syphon = Camera.main.GetComponent<SyphonServer>();        
+        syphon.enabled = captureToggle.isOn;
         #endif
     }
 }

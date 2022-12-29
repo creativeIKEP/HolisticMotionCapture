@@ -93,10 +93,18 @@ partial class HolisticMotionCapture{
         if(!isLeft) handUp *= -1;
         var handForward = Vector3.Cross(handUp, handDirection);
         if(!isLeft) handForward *= -1;
-
         var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
+
+        // rotate the arm because avoid the wrist will be twisted
+        var lowerArmBoneTransform = avatar.GetBoneTransform(HumanBodyBones.RightLowerArm);
+        if(isLeft) {
+            lowerArmBoneTransform = avatar.GetBoneTransform(HumanBodyBones.LeftLowerArm);
+        }
         var wristTransform = avatar.GetBoneTransform(wrist);
-        wristTransform.rotation = Quaternion.Lerp(wristTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * wristRotation, lerpPercentage);
+        var lerpedWristRotation = Quaternion.Lerp(wristTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * wristRotation, lerpPercentage);
+        lowerArmBoneTransform.rotation = Quaternion.Lerp(lowerArmBoneTransform.rotation, lerpedWristRotation, 0.2f);
+        wristTransform.rotation = lerpedWristRotation;
+
 
         foreach(var bone in getPerHandRotatedBones(isLeft)){
             var handJoint = handJoints[bone];

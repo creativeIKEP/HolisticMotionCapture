@@ -201,9 +201,11 @@ partial class HolisticMotionCapture
         ratioAvg.y = ratioAvg.y * 0.5f + 0.5f;
         var ly = Mathf.Lerp(-12, 12, ratioAvg.x);
         var ry = Mathf.Lerp(-12, 12, ratioAvg.x);
-        var x = Mathf.Lerp(-10, 10, ratioAvg.y);
+        // disable
+        // var x = Mathf.Lerp(-10, 10, ratioAvg.y);
+        var x = 0;
 
-        var param = new Vector3(0.01f, 1.5f, Time.deltaTime);
+        var param = new Vector3(3f, 1.5f, Time.deltaTime);
         var l_a = LpfAlpha(ly, leftPupilBoneTrans.localRotation.eulerAngles.y, param);
         var r_a = LpfAlpha(ry, rightPupilBoneTrans.localRotation.eulerAngles.y, param);
 

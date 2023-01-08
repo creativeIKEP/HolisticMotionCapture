@@ -145,9 +145,8 @@ partial class HolisticMotionCapture
         var hipScore = (RotatePoseLandmark(leftHipIndex).w + RotatePoseLandmark(rightHipIndex).w) * 0.5f;
         if(hipScore > scoreThreshold && !isUpperBodyOnly){
             var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation *  poseJoints[HumanBodyBones.Hips].initRotation;
-            var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-            hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * hipRotation, lerpPercentage);
-            avatar.bodyRotation = Quaternion.Lerp(avatar.bodyRotation, avatar.GetBoneTransform(HumanBodyBones.Hips).rotation * hipRotation, lerpPercentage);
+            var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Hips);
+            hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, hipRotation, lerpPercentage);
         }
         
         var upperBodyBones = new HumanBodyBones[]{
@@ -209,7 +208,6 @@ partial class HolisticMotionCapture
 
     void ResetPose(float lerpPercentage){
         foreach(var poseJoint in poseJoints){
-            if(poseJoint.Key == HumanBodyBones.Hips) continue;
             var boneTrans = avatar.GetBoneTransform(poseJoint.Key);
             boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, poseJoints[poseJoint.Key].initRotation, lerpPercentage);
         }

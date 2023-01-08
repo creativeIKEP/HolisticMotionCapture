@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,12 +7,45 @@ using VRM;
 partial class HolisticMotionCapture
 {
     VRMBlendShapeProxy proxy;
+    int faceCounter;
+    List<LowPassFilter> face_lpfs;
+    List<Tuple<int, Vector4>> lpfedFaceBuffers;
+    List<LowPassFilter> leftEye_lpfs;
+    List<Tuple<int, Vector4>> lpfedLeftEyeBuffers;
+    List<LowPassFilter> rightEye_lpfs;
+    List<Tuple<int, Vector4>> lpfedRightEyeBuffers;
 
     void FaceInit(){
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
+        
+        face_lpfs = new List<LowPassFilter>();
+        lpfedFaceBuffers = new List<Tuple<int, Vector4>>();
+        for(int i = 0; i < holisticPipeline.faceVertexCount; i++) {
+            face_lpfs.Add(new LowPassFilter(2, 1.5f));
+            lpfedFaceBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
+        }
+
+        leftEye_lpfs = new List<LowPassFilter>();
+        lpfedLeftEyeBuffers = new List<Tuple<int, Vector4>>();
+        for(int i = 0; i < holisticPipeline.eyeVertexCount; i++) {
+            leftEye_lpfs.Add(new LowPassFilter(2, 1.5f));
+            lpfedLeftEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
+        }
+
+        rightEye_lpfs = new List<LowPassFilter>();
+        lpfedRightEyeBuffers = new List<Tuple<int, Vector4>>();
+        for(int i = 0; i < holisticPipeline.eyeVertexCount; i++) {
+            rightEye_lpfs.Add(new LowPassFilter(2, 1.5f));
+            lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
+        }
     }
 
     void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold, bool isSeparateEyeBlink){
+        faceCounter++;
+        if(faceCounter >= int.MaxValue) {
+            faceCounter = 1;
+        }
+
         if(mocapType == HolisticMocapType.pose_and_hand || mocapType == HolisticMocapType.pose_only){
             return;
         }
@@ -39,25 +73,58 @@ partial class HolisticMotionCapture
     }
 
     Vector4 FaceLandmark(int index){
-        return holisticPipeline.GetFaceLandmark(index);
+        var landmark = holisticPipeline.GetFaceLandmark(index);
+        
+        // Low pass Filter
+        var buffer = lpfedFaceBuffers[index];
+        if(buffer.Item1 == faceCounter) {
+            landmark = buffer.Item2;
+        }
+        else {
+            var score = landmark.w;
+            landmark = face_lpfs[index].Filter(landmark, Time.deltaTime);
+            landmark.w = score;
+            lpfedFaceBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+        }
+
+        return landmark;
     }
 
     Vector4 EyeLandmark(int index, bool isLeft){
         var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
+
+        // Low pass Filter
+        var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
+        if(buffer.Item1 == faceCounter) {
+            landmark = buffer.Item2;
+        }
+        else {
+            var score = landmark.w;
+            var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
+            landmark = filter.Filter(landmark, Time.deltaTime);
+            landmark.w = score;
+            if(isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+            else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+        }
+
         return landmark;
     }
 
     void BlinkRender(bool isSeparateEyeBlink){
         if(proxy == null) return;
 
-        var leftEyeBlink = CalculateEyeBlink(true);
-        var rightEyeBlink = CalculateEyeBlink(false);
+        var eyeBlink = CalculateEyeBlink();
+        var leftEyeBlink = eyeBlink.x;
+        var rightEyeBlink = eyeBlink.y;
         
         if(isSeparateEyeBlink){
             var preLeftEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
             var preRightEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
             leftEyeBlink = LowPassFilter(leftEyeBlink, preLeftEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
             rightEyeBlink = LowPassFilter(rightEyeBlink, preRightEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
+            if(leftEyeBlink > 0.65f) leftEyeBlink = 1f;
+            if(rightEyeBlink > 0.65f) rightEyeBlink = 1f;
+
             proxy.SetValues(new Dictionary<BlendShapeKey, float>
             {
                 {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
@@ -75,7 +142,39 @@ partial class HolisticMotionCapture
         }
     }
 
-    float CalculateEyeBlink(bool isLeft){
+    float minEarL = 1f;
+    float minEarR = 1f;
+    float maxEarL = 0f;
+    float maxEarR = 0f;
+
+    Vector2 CalculateEyeBlink(){
+        var earL = CalculateEar(true);
+        var earR = CalculateEar(false);
+        var integratedEar = (earL + earR) * 0.5f;
+
+        minEarL += 0.0001f;
+        minEarR += 0.0001f;
+        maxEarL -= 0.005f;
+        maxEarR -= 0.005f;
+        if(Mathf.Min(integratedEar, earL) < minEarL) minEarL = Mathf.Min(integratedEar, earL);
+        if(Mathf.Min(integratedEar, earR) < minEarR) minEarR = Mathf.Min(integratedEar, earR);
+        if(Mathf.Max(integratedEar, earL) > maxEarL) maxEarL = Mathf.Max(integratedEar, earL);
+        if(Mathf.Max(integratedEar, earR) > maxEarR) maxEarR = Mathf.Max(integratedEar, earR);
+
+        var eyeBlinkL = Mathf.InverseLerp(minEarL, maxEarL, earL);
+        var eyeBlinkR = Mathf.InverseLerp(minEarR, maxEarR, earR);
+
+        if(eyeBlinkL < 0.65f) eyeBlinkL = 0f;
+        if(eyeBlinkL > 0.85f) eyeBlinkL = 1f;
+        if(eyeBlinkR < 0.65f) eyeBlinkR = 0f;
+        if(eyeBlinkR > 0.85f) eyeBlinkR = 1f;
+
+        eyeBlinkL = 1.0f - Mathf.Clamp01(eyeBlinkL);
+        eyeBlinkR = 1.0f - Mathf.Clamp01(eyeBlinkR);
+        return new Vector2(eyeBlinkL, eyeBlinkR);
+    }
+
+    float CalculateEar(bool isLeft) {
         var eyeOuterCorner = EyeLandmark(5, isLeft);
         var eyeInnerCorner = EyeLandmark(13, isLeft);
         var eyeOuterUpperLid = EyeLandmark(16, isLeft);
@@ -90,12 +189,7 @@ partial class HolisticMotionCapture
         var eyeOuterLidDistance = Vector2.Distance(eyeOuterUpperLid, eyeOuterLowerLid);
         var eyeInnerLidDistance = Vector2.Distance(eyeInnerUpperLid, eyeInnerLowerLid);
         var ear = (eyeOuterLidDistance + eyeInnerLidDistance) / (2 * eyeWidth);
-        var maxRatio = 0.4f;
-        var minRatio = 0.2f;
-        var eyeOpenRatio = (ear - minRatio) / (maxRatio - minRatio);
-        var eyeBlink = 1.0f - eyeOpenRatio;
-        eyeBlink = Mathf.Clamp(eyeBlink, 0, 1);
-        return eyeBlink;
+        return ear;
     }
 
     float IntegratedBlink(float leftEyeBlink, float rightEyeBlink){

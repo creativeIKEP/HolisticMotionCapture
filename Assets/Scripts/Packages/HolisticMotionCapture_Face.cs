@@ -14,6 +14,14 @@ partial class HolisticMotionCapture
     List<Tuple<int, Vector4>> lpfedLeftEyeBuffers;
     List<LowPassFilter> rightEye_lpfs;
     List<Tuple<int, Vector4>> lpfedRightEyeBuffers;
+    
+    LowPassFilter leftEyeBlinkLpf;
+    LowPassFilter rightEyeBlinkLpf;
+    LowPassFilter mouthI_Lpf;
+    LowPassFilter mouthA_Lpf;
+    LowPassFilter mouthU_Lpf;
+    LowPassFilter mouthE_Lpf;
+    LowPassFilter mouthO_Lpf;
 
     void FaceInit(){
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
@@ -38,6 +46,15 @@ partial class HolisticMotionCapture
             rightEye_lpfs.Add(new LowPassFilter(2, 1.5f));
             lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
+
+        leftEyeBlinkLpf = new LowPassFilter(3f, 1.5f);
+        rightEyeBlinkLpf = new LowPassFilter(3f, 1.5f);
+
+        mouthI_Lpf = new LowPassFilter(30f, 1.5f);
+        mouthA_Lpf = new LowPassFilter(30f, 1.5f);
+        mouthU_Lpf = new LowPassFilter(30f, 1.5f);
+        mouthE_Lpf = new LowPassFilter(30f, 1.5f);
+        mouthO_Lpf = new LowPassFilter(30f, 1.5f);
     }
 
     void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold){
@@ -57,19 +74,6 @@ partial class HolisticMotionCapture
         BlinkRender();
         PupilRender();
         MouthRender();
-    }
-
-    float LpfAlpha(float x, float p_x, Vector3 param){
-        float dx = x - p_x;
-        float cutoff = param.y + param.x * Mathf.Abs(dx);
-        float r = 2.0f * 3.141592f * cutoff * param.z;
-        float alpha = r / (r + 1);
-        return alpha;
-    }
-
-    float LowPassFilter(float x, float p_x, Vector3 param){
-        float alpha = LpfAlpha(x, p_x, param);
-        return Mathf.Lerp(p_x, x, alpha);
     }
 
     Vector4 FaceLandmark(int index){
@@ -116,11 +120,12 @@ partial class HolisticMotionCapture
         var eyeBlink = CalculateEyeBlink();
         var leftEyeBlink = eyeBlink.x;
         var rightEyeBlink = eyeBlink.y;
-        
-        var preLeftEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
-        var preRightEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
-        leftEyeBlink = LowPassFilter(leftEyeBlink, preLeftEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
-        rightEyeBlink = LowPassFilter(rightEyeBlink, preRightEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
+        var leftEyeBlinkDx = leftEyeBlink - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
+        var rightEyeBlinkDx = rightEyeBlink - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
+
+
+        leftEyeBlink = leftEyeBlinkLpf.Filter(leftEyeBlink, Time.deltaTime, leftEyeBlinkDx);
+        rightEyeBlink = rightEyeBlinkLpf.Filter(rightEyeBlink, Time.deltaTime, rightEyeBlinkDx);
         if(leftEyeBlink > 0.65f) leftEyeBlink = 1f;
         if(rightEyeBlink > 0.65f) rightEyeBlink = 1f;
 
@@ -205,9 +210,13 @@ partial class HolisticMotionCapture
         // var x = Mathf.Lerp(-10, 10, ratioAvg.y);
         var x = 0;
 
-        var param = new Vector3(3f, 1.5f, Time.deltaTime);
-        var l_a = LpfAlpha(ly, leftPupilBoneTrans.localRotation.eulerAngles.y, param);
-        var r_a = LpfAlpha(ry, rightPupilBoneTrans.localRotation.eulerAngles.y, param);
+        var param = new Vector3(0.005f, 1.5f, Time.deltaTime);
+        float l_dx = ly - leftPupilBoneTrans.localRotation.eulerAngles.y;
+        float l_cutoff = param.y + param.x * Mathf.Abs(l_dx);
+        var l_a = LowPassFilter.Alpha(l_cutoff, Time.deltaTime);
+        float r_dx = ry - rightPupilBoneTrans.localRotation.eulerAngles.y;
+        float r_cutoff = param.y + param.x * Mathf.Abs(r_dx);
+        var r_a = LowPassFilter.Alpha(r_cutoff, Time.deltaTime);
 
         leftPupilBoneTrans.localRotation = Quaternion.Lerp(leftPupilBoneTrans.localRotation, Quaternion.Euler(x, ly, 0), l_a);
         rightPupilBoneTrans.localRotation = Quaternion.Lerp(rightPupilBoneTrans.localRotation, Quaternion.Euler(x, ry, 0), r_a);
@@ -273,12 +282,22 @@ partial class HolisticMotionCapture
         var ratioE = ((ratioU - 0.2f) / 0.8f) * (1 - ratioI) * 0.3f;
         var ratioO = (1 - ratioI) * 0.4f * ((mouthY - 0.3f) / 0.7f);
 
-        var param = new Vector3(30.0f, 1.5f, Time.deltaTime);
-        ratioI = LowPassFilter(Mathf.Clamp(ratioI, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I)), param);
-        ratioA = LowPassFilter(Mathf.Clamp(ratioA, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A)), param);
-        ratioU = LowPassFilter(Mathf.Clamp(ratioU, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U)), param);
-        ratioE = LowPassFilter(Mathf.Clamp(ratioE, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E)), param);
-        ratioO = LowPassFilter(Mathf.Clamp(ratioO, 0, 1), proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O)), param);
+        ratioI = Mathf.Clamp01(ratioI);
+        ratioA = Mathf.Clamp01(ratioA);
+        ratioU = Mathf.Clamp01(ratioU);
+        ratioE = Mathf.Clamp01(ratioE);
+        ratioO = Mathf.Clamp01(ratioO);
+
+        var iDx = ratioI - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I));
+        ratioI = mouthI_Lpf.Filter(ratioI, Time.deltaTime, iDx);
+        var aDx = ratioA - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A));
+        ratioA = mouthA_Lpf.Filter(ratioA, Time.deltaTime, aDx);
+        var uDx = ratioU - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U));
+        ratioU = mouthU_Lpf.Filter(ratioU, Time.deltaTime, uDx);
+        var eDx = ratioE - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E));
+        ratioE = mouthE_Lpf.Filter(ratioE, Time.deltaTime, eDx);
+        var oDx = ratioO - proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O));
+        ratioO = mouthO_Lpf.Filter(ratioO, Time.deltaTime, oDx);
 
         proxy.SetValues(new Dictionary<BlendShapeKey, float>
         {

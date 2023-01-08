@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,9 +7,19 @@ partial class HolisticMotionCapture
     #region  private variables
     Dictionary<HumanBodyBones, Joint> poseJoints;
     bool isUpperBodyOnly;
+    List<LowPassFilter> pose_lpfs;
+    List<Tuple<int, Vector4>> lpfedPoseBuffers;
+    int poseCounter;
     #endregion
 
     void PoseInit(){
+        pose_lpfs = new List<LowPassFilter>();
+        lpfedPoseBuffers = new List<Tuple<int, Vector4>>();
+        for(int i = 0; i < holisticPipeline.poseVertexCount; i++) {
+            pose_lpfs.Add(new LowPassFilter(2, 1.5f));
+            lpfedPoseBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
+        }
+
         // default: T pose to A pose
         float upperArmAngle = 60;
         avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
@@ -102,6 +112,11 @@ partial class HolisticMotionCapture
     }
 
     void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, float lerpPercentage){
+        poseCounter++;
+        if(poseCounter >= int.MaxValue) {
+            poseCounter = 1;
+        }
+
         if(mocapType == HolisticMocapType.face_only) return;
 
         // Reset pose if huamn is not visible.
@@ -210,6 +225,19 @@ partial class HolisticMotionCapture
 
     Vector4 RotatePoseLandmark(int index){
         var landmark = holisticPipeline.GetPoseWorldLandmark(index);
+
+        // Low pass Filter
+        var buffer = lpfedPoseBuffers[index];
+        if(buffer.Item1 == poseCounter) {
+            landmark = buffer.Item2;
+        }
+        else {
+            var score = landmark.w;
+            landmark = pose_lpfs[index].Filter(landmark, Time.deltaTime);
+            landmark.w = score;
+            lpfedPoseBuffers[index] = new Tuple<int, Vector4>(poseCounter, landmark);
+        }
+
         return new Vector4(-landmark.x, landmark.y, -landmark.z, landmark.w);
     }
 }

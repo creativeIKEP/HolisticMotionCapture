@@ -14,6 +14,8 @@ public partial class HolisticMotionCapture : System.IDisposable
     }
     
     Animator avatar;
+    const float maxFps = 30.0f;
+    float lastPoseUpdateTime;
 
     public HolisticMotionCapture(Animator avatarAnimator, BlazePoseModel blazePoseModel = BlazePoseModel.full){
         avatar = avatarAnimator;
@@ -40,6 +42,12 @@ public partial class HolisticMotionCapture : System.IDisposable
         float poseDetectionThreshold = 0.75f,
         float poseDetectionIouThreshold = 0.3f)
     {
+        float nowTime = Time.time;
+        if(nowTime - lastPoseUpdateTime < 1.0f / maxFps) {
+            return;
+        }
+        lastPoseUpdateTime = nowTime;
+
         holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
         PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
         HandRender(mocapType, true, handScoreThreshold, lerpPercentage);

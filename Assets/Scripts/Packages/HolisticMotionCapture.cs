@@ -34,7 +34,6 @@ public partial class HolisticMotionCapture : System.IDisposable
         float poseScoreThreshold = 0.5f,
         float handScoreThreshold = 0.5f,
         float faceScoreThreshold = 0.5f,
-        bool isSeparateEyeBlink = false,
         bool isUpperBodyOnly = false,
         float lerpPercentage = 0.3f,
         HolisticMocapType mocapType = HolisticMocapType.full,
@@ -52,7 +51,7 @@ public partial class HolisticMotionCapture : System.IDisposable
         PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
         HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
         HandRender(mocapType, false, handScoreThreshold, lerpPercentage);
-        FaceRender(mocapType, faceScoreThreshold, isSeparateEyeBlink);
+        FaceRender(mocapType, faceScoreThreshold);
     }
 
     public void ResetAvatar(float lerpPercentage = 0.3f) {

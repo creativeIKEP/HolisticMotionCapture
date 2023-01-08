@@ -40,7 +40,7 @@ partial class HolisticMotionCapture
         }
     }
 
-    void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold, bool isSeparateEyeBlink){
+    void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold){
         faceCounter++;
         if(faceCounter >= int.MaxValue) {
             faceCounter = 1;
@@ -54,7 +54,7 @@ partial class HolisticMotionCapture
             return;
         }
 
-        BlinkRender(isSeparateEyeBlink);
+        BlinkRender();
         PupilRender();
         MouthRender();
     }
@@ -110,36 +110,25 @@ partial class HolisticMotionCapture
         return landmark;
     }
 
-    void BlinkRender(bool isSeparateEyeBlink){
+    void BlinkRender(){
         if(proxy == null) return;
 
         var eyeBlink = CalculateEyeBlink();
         var leftEyeBlink = eyeBlink.x;
         var rightEyeBlink = eyeBlink.y;
         
-        if(isSeparateEyeBlink){
-            var preLeftEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
-            var preRightEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
-            leftEyeBlink = LowPassFilter(leftEyeBlink, preLeftEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
-            rightEyeBlink = LowPassFilter(rightEyeBlink, preRightEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
-            if(leftEyeBlink > 0.65f) leftEyeBlink = 1f;
-            if(rightEyeBlink > 0.65f) rightEyeBlink = 1f;
+        var preLeftEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L));
+        var preRightEyeBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R));
+        leftEyeBlink = LowPassFilter(leftEyeBlink, preLeftEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
+        rightEyeBlink = LowPassFilter(rightEyeBlink, preRightEyeBlink, new Vector3(3f, 1.5f, Time.deltaTime));
+        if(leftEyeBlink > 0.65f) leftEyeBlink = 1f;
+        if(rightEyeBlink > 0.65f) rightEyeBlink = 1f;
 
-            proxy.SetValues(new Dictionary<BlendShapeKey, float>
-            {
-                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
-                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), rightEyeBlink}
-            });
-        }
-        else{
-            var blink = IntegratedBlink(leftEyeBlink, rightEyeBlink);
-            var preBlink = proxy.GetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink));
-            blink = LowPassFilter(blink, preBlink, new Vector3(3f, 1.5f, Time.deltaTime));
-            proxy.SetValues(new Dictionary<BlendShapeKey, float>
-            {
-                {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink), blink}
-            });
-        }
+        proxy.SetValues(new Dictionary<BlendShapeKey, float>
+        {
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), leftEyeBlink},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), rightEyeBlink}
+        });
     }
 
     float minEarL = 1f;

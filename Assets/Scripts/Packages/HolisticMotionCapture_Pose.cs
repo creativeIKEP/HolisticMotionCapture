@@ -194,11 +194,12 @@ partial class HolisticMotionCapture
             var poseJoint = poseJoints[bone];
             var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
-            float score = RotatePoseLandmark(boneLandmarkIndex).w;
+            float parentScore = RotatePoseLandmark(boneLandmarkIndex).w;
+            float childScore = RotatePoseLandmark(childLandmarkIndex).w;
 
             Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
             var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
-            if(score < scoreThreshold) {
+            if(parentScore < scoreThreshold && childScore < scoreThreshold) {
                 rot = poseJoints[bone].initRotation;
             }
             var boneTrans = avatar.GetBoneTransform(bone);

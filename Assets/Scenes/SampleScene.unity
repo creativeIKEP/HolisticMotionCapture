@@ -458,6 +458,7 @@ GameObject:
   - component: {fileID: 110265733}
   - component: {fileID: 110265732}
   - component: {fileID: 110265731}
+  - component: {fileID: 110265735}
   m_Layer: 5
   m_Name: ControlCanvas
   m_TagString: Untagged
@@ -547,6 +548,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!225 &110265735
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 110265730}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &150812163
 GameObject:
   m_ObjectHideFlags: 0
@@ -5427,7 +5440,6 @@ GameObject:
   - component: {fileID: 1279241540}
   - component: {fileID: 1279241541}
   - component: {fileID: 1279241539}
-  - component: {fileID: 1279241538}
   m_Layer: 5
   m_Name: MouseInputTrigerUI
   m_TagString: Untagged
@@ -5454,20 +5466,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1279241538
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1279241536}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20b8e9fcfeb0b7e498b90b303d5c99d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CameraMoveSpeed: 0.1
-  CameraZMoveSpeed: 1
 --- !u!114 &1279241539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5485,7 +5483,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 1279241538}
+        - m_Target: {fileID: 1587756043}
           m_TargetAssemblyTypeName: CameraMove, Assembly-CSharp
           m_MethodName: OnClick
           m_Mode: 0
@@ -5501,7 +5499,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 1279241538}
+        - m_Target: {fileID: 1587756043}
           m_TargetAssemblyTypeName: CameraMove, Assembly-CSharp
           m_MethodName: OnDrag
           m_Mode: 0
@@ -5517,7 +5515,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 1279241538}
+        - m_Target: {fileID: 1587756043}
           m_TargetAssemblyTypeName: CameraMove, Assembly-CSharp
           m_MethodName: OnScroll
           m_Mode: 0
@@ -6597,6 +6595,7 @@ GameObject:
   - component: {fileID: 1587756040}
   - component: {fileID: 1587756039}
   - component: {fileID: 1587756042}
+  - component: {fileID: 1587756043}
   m_Layer: 0
   m_Name: Visuallizer
   m_TagString: Untagged
@@ -6677,6 +6676,22 @@ MonoBehaviour:
   hmcTypeSelect: {fileID: 1893656762}
   isUpperBodyOnlyToggle: {fileID: 1265961705}
   lookCameraToggle: {fileID: 1699879248}
+--- !u!114 &1587756043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1587756038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20b8e9fcfeb0b7e498b90b303d5c99d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CameraMoveSpeed: 0.1
+  CameraZMoveSpeed: 1
+  controlCanvas: {fileID: 110265735}
+  PredictionCamera: {fileID: 1657563702}
 --- !u!1 &1640757266
 GameObject:
   m_ObjectHideFlags: 0

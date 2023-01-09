@@ -6668,6 +6668,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   visuallizer: {fileID: 1587756039}
+  defaultTexture: {fileID: 2800000, guid: bba2c9416aea5044b8a15bc3ef252fb9, type: 3}
   backGroundTexture: {fileID: 759036286}
   backTextureSelect: {fileID: 589837112}
   captureUI: {fileID: 1187475018}

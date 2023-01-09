@@ -13,6 +13,7 @@ using Klak.Syphon;
 public class VisualizeCtrlUI : MonoBehaviour
 {
     [SerializeField] Visuallizer visuallizer;
+    [SerializeField] Texture defaultTexture;
     [SerializeField] RawImage backGroundTexture;
     [SerializeField] Dropdown backTextureSelect;
     [SerializeField] GameObject captureUI;
@@ -23,8 +24,8 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Toggle lookCameraToggle;
 
     readonly string loadedImagePath = "/LoadedImages";
+    readonly string defaultTextureName = "Default";
     readonly string backOffName = "None";
-    Texture defaultTexture;
 
     void Awake()
     {
@@ -43,9 +44,8 @@ public class VisualizeCtrlUI : MonoBehaviour
 
     void Start()
     {
-        defaultTexture = Texture2D.blackTexture;
         backGroundTexture.texture = defaultTexture;
-        backGroundTexture.texture.name = backOffName;
+        backGroundTexture.texture.name = defaultTextureName;
 
         CreateImageOptions();
         CaptureSwitched();
@@ -63,6 +63,7 @@ public class VisualizeCtrlUI : MonoBehaviour
         var imagePathes = Directory.GetFiles(Application.persistentDataPath + loadedImagePath, "*.png");
 
         var backTextureSelectOptions = new List<string>();
+        backTextureSelectOptions.Add(defaultTextureName);
         backTextureSelectOptions.Add(backOffName);
         foreach (var path in imagePathes)
         {
@@ -126,9 +127,14 @@ public class VisualizeCtrlUI : MonoBehaviour
     public void ChangeBackTexture()
     {
         var filename = backTextureSelect.options[backTextureSelect.value].text;
-        if (filename == backOffName)
+        if (filename == defaultTexture.name)
         {
             backGroundTexture.texture = defaultTexture;
+            return;
+        }
+        if (filename == backOffName)
+        {
+            backGroundTexture.texture = Texture2D.blackTexture;
             return;
         }
 

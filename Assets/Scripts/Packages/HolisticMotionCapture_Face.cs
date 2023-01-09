@@ -47,8 +47,8 @@ partial class HolisticMotionCapture
             lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
 
-        leftEyeBlinkLpf = new LowPassFilter(3f, 1.5f);
-        rightEyeBlinkLpf = new LowPassFilter(3f, 1.5f);
+        leftEyeBlinkLpf = new LowPassFilter(0.00003f, 1.5f);
+        rightEyeBlinkLpf = new LowPassFilter(0.00003f, 1.5f);
 
         mouthI_Lpf = new LowPassFilter(30f, 1.5f);
         mouthA_Lpf = new LowPassFilter(30f, 1.5f);

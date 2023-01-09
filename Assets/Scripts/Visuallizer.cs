@@ -179,4 +179,9 @@ public class Visuallizer : MonoBehaviour
     public void SetHolisticMocapType(HolisticMocapType type){
         holisticMocapType = type;
     }
+
+    public void ResetPose(){
+        if(motionCapture == null) return;
+        motionCapture.ResetAvatar(1);
+    }
 }

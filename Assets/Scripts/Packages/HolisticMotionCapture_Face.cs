@@ -61,6 +61,29 @@ partial class HolisticMotionCapture
         mouthO_Lpf = new LowPassFilter(30f, 1.5f);
     }
 
+    void ResetFace() {
+        proxy.SetValues(new Dictionary<BlendShapeKey, float>
+        {
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.A), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.I), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.U), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.E), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.O), 0},
+        });
+
+
+        var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
+        var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
+        if(leftPupilBoneTrans != null) {
+            leftPupilBoneTrans.localRotation = Quaternion.Euler(Vector3.zero);
+        }
+        if(rightPupilBoneTrans != null) {
+            rightPupilBoneTrans.localRotation = Quaternion.Euler(Vector3.zero);
+        }
+    }
+
     void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold){
         faceCounter++;
         if(faceCounter >= int.MaxValue) {

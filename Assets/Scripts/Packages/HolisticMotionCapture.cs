@@ -58,5 +58,6 @@ public partial class HolisticMotionCapture : System.IDisposable
         ResetPose(lerpPercentage);
         ResetHand(true, lerpPercentage);
         ResetHand(false, lerpPercentage);
+        ResetFace();
     }
 }

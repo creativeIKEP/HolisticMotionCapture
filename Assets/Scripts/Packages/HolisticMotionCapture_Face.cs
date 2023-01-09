@@ -14,7 +14,7 @@ partial class HolisticMotionCapture
     List<Tuple<int, Vector4>> lpfedLeftEyeBuffers;
     List<LowPassFilter> rightEye_lpfs;
     List<Tuple<int, Vector4>> lpfedRightEyeBuffers;
-    
+
     float minEarL = 1f;
     float minEarR = 1f;
     float maxEarL = 0f;
@@ -27,26 +27,30 @@ partial class HolisticMotionCapture
     LowPassFilter mouthE_Lpf;
     LowPassFilter mouthO_Lpf;
 
-    void FaceInit(){
+    void FaceInit()
+    {
         proxy = avatar.GetComponent<VRMBlendShapeProxy>();
-        
+
         face_lpfs = new List<LowPassFilter>();
         lpfedFaceBuffers = new List<Tuple<int, Vector4>>();
-        for(int i = 0; i < holisticPipeline.faceVertexCount; i++) {
+        for (int i = 0; i < holisticPipeline.faceVertexCount; i++)
+        {
             face_lpfs.Add(new LowPassFilter(2, 1.5f));
             lpfedFaceBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
 
         leftEye_lpfs = new List<LowPassFilter>();
         lpfedLeftEyeBuffers = new List<Tuple<int, Vector4>>();
-        for(int i = 0; i < holisticPipeline.eyeVertexCount; i++) {
+        for (int i = 0; i < holisticPipeline.eyeVertexCount; i++)
+        {
             leftEye_lpfs.Add(new LowPassFilter(2, 1.5f));
             lpfedLeftEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
 
         rightEye_lpfs = new List<LowPassFilter>();
         lpfedRightEyeBuffers = new List<Tuple<int, Vector4>>();
-        for(int i = 0; i < holisticPipeline.eyeVertexCount; i++) {
+        for (int i = 0; i < holisticPipeline.eyeVertexCount; i++)
+        {
             rightEye_lpfs.Add(new LowPassFilter(2, 1.5f));
             lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
@@ -61,7 +65,8 @@ partial class HolisticMotionCapture
         mouthO_Lpf = new LowPassFilter(30f, 1.5f);
     }
 
-    void ResetFace() {
+    void ResetFace()
+    {
         proxy.SetValues(new Dictionary<BlendShapeKey, float>
         {
             {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), 0},
@@ -76,25 +81,31 @@ partial class HolisticMotionCapture
 
         var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
         var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
-        if(leftPupilBoneTrans != null) {
+        if (leftPupilBoneTrans != null)
+        {
             leftPupilBoneTrans.localRotation = Quaternion.Euler(Vector3.zero);
         }
-        if(rightPupilBoneTrans != null) {
+        if (rightPupilBoneTrans != null)
+        {
             rightPupilBoneTrans.localRotation = Quaternion.Euler(Vector3.zero);
         }
     }
 
-    void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold){
+    void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold)
+    {
         faceCounter++;
-        if(faceCounter >= int.MaxValue) {
+        if (faceCounter >= int.MaxValue)
+        {
             faceCounter = 1;
         }
 
-        if(mocapType == HolisticMocapType.pose_and_hand || mocapType == HolisticMocapType.pose_only){
+        if (mocapType == HolisticMocapType.pose_and_hand || mocapType == HolisticMocapType.pose_only)
+        {
             return;
         }
 
-        if(holisticPipeline.faceDetectionScore < faceScoreThreshold) {
+        if (holisticPipeline.faceDetectionScore < faceScoreThreshold)
+        {
             return;
         }
 
@@ -103,15 +114,18 @@ partial class HolisticMotionCapture
         MouthRender();
     }
 
-    Vector4 FaceLandmark(int index){
+    Vector4 FaceLandmark(int index)
+    {
         var landmark = holisticPipeline.GetFaceLandmark(index);
-        
+
         // Low pass Filter
         var buffer = lpfedFaceBuffers[index];
-        if(buffer.Item1 == faceCounter) {
+        if (buffer.Item1 == faceCounter)
+        {
             landmark = buffer.Item2;
         }
-        else {
+        else
+        {
             var score = landmark.w;
             landmark = face_lpfs[index].Filter(landmark, Time.deltaTime);
             landmark.w = score;
@@ -121,28 +135,32 @@ partial class HolisticMotionCapture
         return landmark;
     }
 
-    Vector4 EyeLandmark(int index, bool isLeft){
+    Vector4 EyeLandmark(int index, bool isLeft)
+    {
         var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
 
         // Low pass Filter
         var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
-        if(buffer.Item1 == faceCounter) {
+        if (buffer.Item1 == faceCounter)
+        {
             landmark = buffer.Item2;
         }
-        else {
+        else
+        {
             var score = landmark.w;
             var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
             landmark = filter.Filter(landmark, Time.deltaTime);
             landmark.w = score;
-            if(isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+            if (isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
             else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
         }
 
         return landmark;
     }
 
-    void BlinkRender(){
-        if(proxy == null) return;
+    void BlinkRender()
+    {
+        if (proxy == null) return;
 
         var eyeBlink = CalculateEyeBlink();
         var leftEyeBlink = eyeBlink.x;
@@ -153,8 +171,8 @@ partial class HolisticMotionCapture
 
         leftEyeBlink = leftEyeBlinkLpf.Filter(leftEyeBlink, Time.deltaTime, leftEyeBlinkDx);
         rightEyeBlink = rightEyeBlinkLpf.Filter(rightEyeBlink, Time.deltaTime, rightEyeBlinkDx);
-        if(leftEyeBlink > 0.65f) leftEyeBlink = 1f;
-        if(rightEyeBlink > 0.65f) rightEyeBlink = 1f;
+        if (leftEyeBlink > 0.65f) leftEyeBlink = 1f;
+        if (rightEyeBlink > 0.65f) rightEyeBlink = 1f;
 
         proxy.SetValues(new Dictionary<BlendShapeKey, float>
         {
@@ -163,7 +181,8 @@ partial class HolisticMotionCapture
         });
     }
 
-    Vector2 CalculateEyeBlink(){
+    Vector2 CalculateEyeBlink()
+    {
         var earL = CalculateEar(true);
         var earR = CalculateEar(false);
         var integratedEar = (earL + earR) * 0.5f;
@@ -172,25 +191,26 @@ partial class HolisticMotionCapture
         minEarR += 0.0001f;
         maxEarL -= 0.005f;
         maxEarR -= 0.005f;
-        if(Mathf.Min(integratedEar, earL) < minEarL) minEarL = Mathf.Min(integratedEar, earL);
-        if(Mathf.Min(integratedEar, earR) < minEarR) minEarR = Mathf.Min(integratedEar, earR);
-        if(Mathf.Max(integratedEar, earL) > maxEarL) maxEarL = Mathf.Max(integratedEar, earL);
-        if(Mathf.Max(integratedEar, earR) > maxEarR) maxEarR = Mathf.Max(integratedEar, earR);
+        if (Mathf.Min(integratedEar, earL) < minEarL) minEarL = Mathf.Min(integratedEar, earL);
+        if (Mathf.Min(integratedEar, earR) < minEarR) minEarR = Mathf.Min(integratedEar, earR);
+        if (Mathf.Max(integratedEar, earL) > maxEarL) maxEarL = Mathf.Max(integratedEar, earL);
+        if (Mathf.Max(integratedEar, earR) > maxEarR) maxEarR = Mathf.Max(integratedEar, earR);
 
         var eyeBlinkL = Mathf.InverseLerp(minEarL, maxEarL, earL);
         var eyeBlinkR = Mathf.InverseLerp(minEarR, maxEarR, earR);
 
-        if(eyeBlinkL < 0.65f) eyeBlinkL = 0f;
-        if(eyeBlinkL > 0.85f) eyeBlinkL = 1f;
-        if(eyeBlinkR < 0.65f) eyeBlinkR = 0f;
-        if(eyeBlinkR > 0.85f) eyeBlinkR = 1f;
+        if (eyeBlinkL < 0.65f) eyeBlinkL = 0f;
+        if (eyeBlinkL > 0.85f) eyeBlinkL = 1f;
+        if (eyeBlinkR < 0.65f) eyeBlinkR = 0f;
+        if (eyeBlinkR > 0.85f) eyeBlinkR = 1f;
 
         eyeBlinkL = 1.0f - Mathf.Clamp01(eyeBlinkL);
         eyeBlinkR = 1.0f - Mathf.Clamp01(eyeBlinkR);
         return new Vector2(eyeBlinkL, eyeBlinkR);
     }
 
-    float CalculateEar(bool isLeft) {
+    float CalculateEar(bool isLeft)
+    {
         var eyeOuterCorner = EyeLandmark(5, isLeft);
         var eyeInnerCorner = EyeLandmark(13, isLeft);
         var eyeOuterUpperLid = EyeLandmark(16, isLeft);
@@ -199,7 +219,8 @@ partial class HolisticMotionCapture
         var eyeInnerLowerLid = EyeLandmark(10, isLeft);
 
         var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
-        if(eyeWidth < 1e-10){
+        if (eyeWidth < 1e-10)
+        {
             eyeWidth = (float)(1e-10);
         }
         var eyeOuterLidDistance = Vector2.Distance(eyeOuterUpperLid, eyeOuterLowerLid);
@@ -208,10 +229,11 @@ partial class HolisticMotionCapture
         return ear;
     }
 
-    void PupilRender(){
+    void PupilRender()
+    {
         var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
         var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
-        if(leftPupilBoneTrans == null || rightPupilBoneTrans == null) return;
+        if (leftPupilBoneTrans == null || rightPupilBoneTrans == null) return;
 
         var leftRatio = CalculatePupil(true);
         var rightRatio = CalculatePupil(false);
@@ -236,7 +258,8 @@ partial class HolisticMotionCapture
         rightPupilBoneTrans.localRotation = Quaternion.Lerp(rightPupilBoneTrans.localRotation, Quaternion.Euler(x, ry, 0), r_a);
     }
 
-    Vector2 CalculatePupil(bool isLeft){
+    Vector2 CalculatePupil(bool isLeft)
+    {
         var eyeOuterCorner = EyeLandmark(5, isLeft);
         var eyeInnerCorner = EyeLandmark(13, isLeft);
         var eyeMidUpper = EyeLandmark(17, isLeft);
@@ -252,12 +275,13 @@ partial class HolisticMotionCapture
         var ratioX = dx / (eyeWidth * 0.5f);
         var ratioY = dy / (eyeHeight * 0.5f);
         ratioY += 0.3f;
-        if(float.IsInfinity(ratioX) || float.IsNaN(ratioX)) ratioX = 0;
-        if(float.IsInfinity(ratioY) || float.IsNaN(ratioY)) ratioY = 0;
+        if (float.IsInfinity(ratioX) || float.IsNaN(ratioX)) ratioX = 0;
+        if (float.IsInfinity(ratioY) || float.IsNaN(ratioY)) ratioY = 0;
         return new Vector2(ratioX, ratioY);
     }
 
-    void MouthRender(){
+    void MouthRender()
+    {
         var eyeInnerCornerL = FaceLandmark(133);
         var eyeInnerCornerR = FaceLandmark(362);
         var eyeOuterCornerL = FaceLandmark(130);
@@ -265,10 +289,12 @@ partial class HolisticMotionCapture
 
         var eyeInnerDistance = Vector3.Distance(eyeInnerCornerL, eyeInnerCornerR);
         var eyeOuterDistance = Vector3.Distance(eyeOuterCornerL, eyeOuterCornerR);
-        if(eyeInnerDistance < 1e-10){
+        if (eyeInnerDistance < 1e-10)
+        {
             eyeInnerDistance = (float)(1e-10);
         }
-        if(eyeOuterDistance < 1e-10){
+        if (eyeOuterDistance < 1e-10)
+        {
             eyeOuterDistance = (float)(1e-10);
         }
 
@@ -286,13 +312,13 @@ partial class HolisticMotionCapture
         ratioY = (ratioY - 0.15f) / (0.7f - 0.15f);
         ratioX = (ratioX - 0.45f) / (0.9f - 0.45f);
         ratioX = (ratioX - 0.3f) * 2f;
-        
+
         var mouthX = ratioX;
         var mouthY = (mouthOpen / eyeInnerDistance - 0.17f) / (0.5f - 0.17f);
 
         var ratioI = Mathf.Clamp(mouthX * 2 * ((mouthY - 0.2f) / 0.5f), 0, 1);
         var ratioA = mouthY * 0.4f + mouthY * (1 - ratioI) * 0.6f;
-        var ratioU = mouthY * ((1-ratioI) / 0.3f) * 0.01f;
+        var ratioU = mouthY * ((1 - ratioI) / 0.3f) * 0.01f;
         var ratioE = ((ratioU - 0.2f) / 0.8f) * (1 - ratioI) * 0.3f;
         var ratioO = (1 - ratioI) * 0.4f * ((mouthY - 0.3f) / 0.7f);
 

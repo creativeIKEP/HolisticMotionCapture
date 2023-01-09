@@ -4,8 +4,10 @@ using UnityEngine;
 public class WebCamInput
 {
     // Provide input image Texture.
-    public Texture inputImageTexture{
-        get{
+    public Texture inputImageTexture
+    {
+        get
+        {
             return inputRT;
         }
     }
@@ -14,32 +16,37 @@ public class WebCamInput
     RenderTexture inputRT;
 
 
-    public WebCamInput(string webCamName){
+    public WebCamInput(string webCamName)
+    {
         webCamTexture = new WebCamTexture(webCamName);
     }
 
-    public WebCamInput(string webCamName, int w, int h){
+    public WebCamInput(string webCamName, int w, int h)
+    {
         webCamTexture = new WebCamTexture(webCamName, w, h);
     }
 
-    public IEnumerator CaptureStart(System.Action<Vector2> callback){
+    public IEnumerator CaptureStart(System.Action<Vector2> callback)
+    {
         webCamTexture.Play();
-        while(webCamTexture.width < 100) {
+        while (webCamTexture.width < 100)
+        {
             yield return null;
         }
         inputRT = new RenderTexture(webCamTexture.width, webCamTexture.height, 0);
         callback(new Vector2(webCamTexture.width, webCamTexture.height));
     }
 
-    public void CaptureStop(){
+    public void CaptureStop()
+    {
         if (webCamTexture != null) webCamTexture.Stop();
         if (inputRT != null) inputRT.Release();
     }
 
     public void UpdateTexture()
     {
-        if(webCamTexture == null || inputRT == null) return;
-        if(!webCamTexture.didUpdateThisFrame) return;
+        if (webCamTexture == null || inputRT == null) return;
+        if (!webCamTexture.didUpdateThisFrame) return;
 
         var aspect1 = (float)webCamTexture.width / webCamTexture.height;
         var aspect2 = (float)inputRT.width / inputRT.height;

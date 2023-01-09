@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class BoneToHolisticIndex{
+public static class BoneToHolisticIndex
+{
     public static Dictionary<HumanBodyBones, int> PoseTable = new Dictionary<HumanBodyBones, int>(){
         // Right arm
         {HumanBodyBones.RightUpperArm, 12},
@@ -37,11 +38,11 @@ public static class BoneToHolisticIndex{
         {HumanBodyBones.LeftIndexProximal, 5},
         {HumanBodyBones.LeftIndexIntermediate, 6},
         {HumanBodyBones.LeftIndexDistal, 7},
-        
+
         {HumanBodyBones.LeftMiddleProximal, 9},
         {HumanBodyBones.LeftMiddleIntermediate, 10},
         {HumanBodyBones.LeftMiddleDistal, 11},
-        
+
         {HumanBodyBones.LeftRingProximal, 13},
         {HumanBodyBones.LeftRingIntermediate, 14},
         {HumanBodyBones.LeftRingDistal, 15},
@@ -60,11 +61,11 @@ public static class BoneToHolisticIndex{
         {HumanBodyBones.RightIndexProximal, 5},
         {HumanBodyBones.RightIndexIntermediate, 6},
         {HumanBodyBones.RightIndexDistal, 7},
-        
+
         {HumanBodyBones.RightMiddleProximal, 9},
         {HumanBodyBones.RightMiddleIntermediate, 10},
         {HumanBodyBones.RightMiddleDistal, 11},
-        
+
         {HumanBodyBones.RightRingProximal, 13},
         {HumanBodyBones.RightRingIntermediate, 14},
         {HumanBodyBones.RightRingDistal, 15},

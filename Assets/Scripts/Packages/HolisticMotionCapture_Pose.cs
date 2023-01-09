@@ -12,10 +12,12 @@ partial class HolisticMotionCapture
     int poseCounter;
     #endregion
 
-    void PoseInit(){
+    void PoseInit()
+    {
         pose_lpfs = new List<LowPassFilter>();
         lpfedPoseBuffers = new List<Tuple<int, Vector4>>();
-        for(int i = 0; i < holisticPipeline.poseVertexCount; i++) {
+        for (int i = 0; i < holisticPipeline.poseVertexCount; i++)
+        {
             pose_lpfs.Add(new LowPassFilter(2, 1.5f));
             lpfedPoseBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
         }
@@ -25,13 +27,13 @@ partial class HolisticMotionCapture
         avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
         avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
 
-        HumanBodyBones[] hipsToHead = new HumanBodyBones[]{HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, HumanBodyBones.Neck, HumanBodyBones.Head};
+        HumanBodyBones[] hipsToHead = new HumanBodyBones[] { HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, HumanBodyBones.Neck, HumanBodyBones.Head };
         HumanBodyBones[] leftShoulderToHand = new HumanBodyBones[]{
-            HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, 
+            HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest,
             HumanBodyBones.LeftShoulder, HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand
         };
         HumanBodyBones[] rightShoulderToHand = new HumanBodyBones[]{
-            HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, 
+            HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest,
             HumanBodyBones.RightShoulder, HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand
         };
         HumanBodyBones[] leftHipsToFoot = new HumanBodyBones[]{
@@ -43,90 +45,99 @@ partial class HolisticMotionCapture
             HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, HumanBodyBones.RightToes
         };
 
-        var boneListStartIndexs = new int[]{0, 3, 3, 1, 1};
+        var boneListStartIndexs = new int[] { 0, 3, 3, 1, 1 };
         var boneLists = new HumanBodyBones[][]
         {
-            hipsToHead, 
-            leftShoulderToHand, 
-            rightShoulderToHand, 
-            leftHipsToFoot, 
+            hipsToHead,
+            leftShoulderToHand,
+            rightShoulderToHand,
+            leftHipsToFoot,
             rightHipsToFoot
         };
         var fallbackParentBones = new HumanBodyBones[]
         {
-            HumanBodyBones.Hips, 
-            HumanBodyBones.Spine, 
-            HumanBodyBones.Spine, 
-            HumanBodyBones.Hips, 
+            HumanBodyBones.Hips,
+            HumanBodyBones.Spine,
+            HumanBodyBones.Spine,
+            HumanBodyBones.Hips,
             HumanBodyBones.Hips
         };
         var fallbackChildBones = new HumanBodyBones[]
         {
-            HumanBodyBones.Head, 
-            HumanBodyBones.LeftHand, 
-            HumanBodyBones.RightHand, 
-            avatar.GetBoneTransform(HumanBodyBones.LeftToes) != null ? HumanBodyBones.LeftToes : HumanBodyBones.LeftFoot, 
+            HumanBodyBones.Head,
+            HumanBodyBones.LeftHand,
+            HumanBodyBones.RightHand,
+            avatar.GetBoneTransform(HumanBodyBones.LeftToes) != null ? HumanBodyBones.LeftToes : HumanBodyBones.LeftFoot,
             avatar.GetBoneTransform(HumanBodyBones.RightToes) != null ? HumanBodyBones.RightToes : HumanBodyBones.RightFoot
         };
 
         poseJoints = new Dictionary<HumanBodyBones, Joint>();
         var forward = TriangleNormal(avatar.GetBoneTransform(HumanBodyBones.Spine).position, avatar.GetBoneTransform(HumanBodyBones.LeftUpperLeg).position, avatar.GetBoneTransform(HumanBodyBones.RightUpperLeg).position);
 
-        for(int i=0; i<boneLists.Length; i++){
+        for (int i = 0; i < boneLists.Length; i++)
+        {
             var boneList = boneLists[i];
             var boneListStartIndex = boneListStartIndexs[i];
             var fallbackParentBone = fallbackParentBones[i];
             var fallbackChildBone = fallbackChildBones[i];
 
-            for(int j = boneListStartIndex; j<boneList.Length; j++){
+            for (int j = boneListStartIndex; j < boneList.Length; j++)
+            {
                 var boneTrans = avatar.GetBoneTransform(boneList[j]);
-                if(boneTrans == null) continue;
+                if (boneTrans == null) continue;
                 var bone = boneList[j];
 
                 HumanBodyBones parent = fallbackParentBone;
-                for(int k = j - 1; k >= 0; k--){
+                for (int k = j - 1; k >= 0; k--)
+                {
                     boneTrans = avatar.GetBoneTransform(boneList[k]);
-                    if(boneTrans == null) continue;
+                    if (boneTrans == null) continue;
                     parent = boneList[k];
                     break;
                 }
 
                 HumanBodyBones child = fallbackChildBone;
-                for(int k = j + 1; k < boneList.Length; k++){
+                for (int k = j + 1; k < boneList.Length; k++)
+                {
                     boneTrans = avatar.GetBoneTransform(boneList[k]);
-                    if(boneTrans == null) continue;
+                    if (boneTrans == null) continue;
                     child = boneList[k];
                     break;
                 }
-                
+
                 var inverseRot = Quaternion.identity;
-                if(bone != child){
+                if (bone != child)
+                {
                     inverseRot = Quaternion.Inverse(Quaternion.LookRotation(avatar.GetBoneTransform(bone).position - avatar.GetBoneTransform(child).position, forward));
                 }
                 poseJoints[bone] = new Joint(bone, parent, child, avatar.GetBoneTransform(bone).rotation, inverseRot);
             }
         }
-        
+
         poseJoints[HumanBodyBones.Hips].inverseRotation = Quaternion.Inverse(Quaternion.LookRotation(forward));
         poseJoints[HumanBodyBones.Head] = new Joint(HumanBodyBones.Head, HumanBodyBones.Head, HumanBodyBones.Head, avatar.GetBoneTransform(HumanBodyBones.Head).rotation, Quaternion.Inverse(Quaternion.LookRotation(forward)));
     }
 
-    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, float lerpPercentage){
+    void PoseRender(HolisticMocapType mocapType, float scoreThreshold, bool isUpperBodyOnly, float lerpPercentage)
+    {
         poseCounter++;
-        if(poseCounter >= int.MaxValue) {
+        if (poseCounter >= int.MaxValue)
+        {
             poseCounter = 1;
         }
 
-        if(mocapType == HolisticMocapType.face_only) return;
+        if (mocapType == HolisticMocapType.face_only) return;
 
         // Reset pose if huamn is not visible.
-        if(holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold){
+        if (holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold)
+        {
             ResetPose(lerpPercentage);
             return;
         }
 
         // Reset pose and update pose in below if mode was changed.
-        if(this.isUpperBodyOnly != isUpperBodyOnly){
+        if (this.isUpperBodyOnly != isUpperBodyOnly)
+        {
             ResetPose(lerpPercentage);
             this.isUpperBodyOnly = isUpperBodyOnly;
         }
@@ -143,14 +154,15 @@ partial class HolisticMotionCapture
         // Caluculate avatar forward direction and hip rotation.
         var forward = TriangleNormal(spinePosition, RotatePoseLandmark(leftHipIndex), RotatePoseLandmark(rightHipIndex));
         var hipScore = (RotatePoseLandmark(leftHipIndex).w + RotatePoseLandmark(rightHipIndex).w) * 0.5f;
-        if(hipScore > scoreThreshold && !isUpperBodyOnly){
-            var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation *  poseJoints[HumanBodyBones.Hips].initRotation;
+        if (hipScore > scoreThreshold && !isUpperBodyOnly)
+        {
+            var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation * poseJoints[HumanBodyBones.Hips].initRotation;
             var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Hips);
             hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, hipRotation, lerpPercentage);
         }
-        
+
         var upperBodyBones = new HumanBodyBones[]{
-            HumanBodyBones.RightUpperArm, 
+            HumanBodyBones.RightUpperArm,
             HumanBodyBones.RightLowerArm,
             HumanBodyBones.LeftUpperArm,
             HumanBodyBones.LeftLowerArm
@@ -165,7 +177,7 @@ partial class HolisticMotionCapture
         };
         List<HumanBodyBones> rotatedBones = new List<HumanBodyBones>();
         rotatedBones.AddRange(upperBodyBones);
-        if(!isUpperBodyOnly) rotatedBones.AddRange(lowerBodyBones);
+        if (!isUpperBodyOnly) rotatedBones.AddRange(lowerBodyBones);
 
         // Rotate head with pose landmark.
         var leftEyeLandmark = RotatePoseLandmark(2);
@@ -176,9 +188,11 @@ partial class HolisticMotionCapture
         var mouthMid = (leftMouthLandmark + rightMouthLandmark) * 0.5f;
         var headScore = (eyeMid.w + mouthMid.w) * 0.5f;
         var headForward = Vector3.Cross(eyeMid - mouthMid, leftMouthLandmark - rightMouthLandmark);
-        if(headScore > scoreThreshold){
-            var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation *  poseJoints[HumanBodyBones.Head].initRotation;
-            if(isUpperBodyOnly){
+        if (headScore > scoreThreshold)
+        {
+            var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation * poseJoints[HumanBodyBones.Head].initRotation;
+            if (isUpperBodyOnly)
+            {
                 var spineRotationEulerAngles = headRotation.eulerAngles;
                 var spineRotation = Quaternion.Euler(headRotation.eulerAngles + new Vector3(-20, 0, 0));
                 var spineTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
@@ -189,7 +203,8 @@ partial class HolisticMotionCapture
         }
 
         // Rotate arms and legs.
-        foreach(var bone in rotatedBones){
+        foreach (var bone in rotatedBones)
+        {
             var poseJoint = poseJoints[bone];
             var boneLandmarkIndex = BoneToHolisticIndex.PoseTable[bone];
             var childLandmarkIndex = BoneToHolisticIndex.PoseTable[poseJoint.childBone];
@@ -198,7 +213,8 @@ partial class HolisticMotionCapture
 
             Vector3 toChild = RotatePoseLandmark(childLandmarkIndex) - RotatePoseLandmark(boneLandmarkIndex);
             var rot = Quaternion.LookRotation(-toChild, forward) * poseJoints[bone].inverseRotation * poseJoints[bone].initRotation;
-            if(parentScore < scoreThreshold && childScore < scoreThreshold) {
+            if (parentScore < scoreThreshold && childScore < scoreThreshold)
+            {
                 rot = poseJoints[bone].initRotation;
             }
             var boneTrans = avatar.GetBoneTransform(bone);
@@ -206,8 +222,10 @@ partial class HolisticMotionCapture
         }
     }
 
-    void ResetPose(float lerpPercentage){
-        foreach(var poseJoint in poseJoints){
+    void ResetPose(float lerpPercentage)
+    {
+        foreach (var poseJoint in poseJoints)
+        {
             var boneTrans = avatar.GetBoneTransform(poseJoint.Key);
             boneTrans.rotation = Quaternion.Lerp(boneTrans.rotation, poseJoints[poseJoint.Key].initRotation, lerpPercentage);
         }
@@ -222,15 +240,18 @@ partial class HolisticMotionCapture
         return dd;
     }
 
-    Vector4 RotatePoseLandmark(int index){
+    Vector4 RotatePoseLandmark(int index)
+    {
         var landmark = holisticPipeline.GetPoseWorldLandmark(index);
 
         // Low pass Filter
         var buffer = lpfedPoseBuffers[index];
-        if(buffer.Item1 == poseCounter) {
+        if (buffer.Item1 == poseCounter)
+        {
             landmark = buffer.Item2;
         }
-        else {
+        else
+        {
             var score = landmark.w;
             landmark = pose_lpfs[index].Filter(landmark, Time.deltaTime);
             landmark.w = score;

@@ -8,7 +8,8 @@ public class Joint
     public Quaternion initRotation;
     public Quaternion inverseRotation;
 
-    public Joint(HumanBodyBones bone, HumanBodyBones parent, HumanBodyBones child, Quaternion initRot, Quaternion inverseRot){
+    public Joint(HumanBodyBones bone, HumanBodyBones parent, HumanBodyBones child, Quaternion initRot, Quaternion inverseRot)
+    {
         this.bone = bone;
         parentBone = parent;
         childBone = child;

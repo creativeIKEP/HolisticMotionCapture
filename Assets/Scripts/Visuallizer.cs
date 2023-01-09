@@ -16,7 +16,7 @@ public class Visuallizer : MonoBehaviour
     [SerializeField, Range(0, 1)] float faceScoreThreshold = 0.5f;
     [SerializeField] Shader handShader;
     [SerializeField, Range(0, 1)] float handScoreThreshold = 0.5f;
-    
+
 
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
     bool isUpperBodyOnly;
@@ -34,12 +34,12 @@ public class Visuallizer : MonoBehaviour
     // Pairs of vertex indices of the lines that make up body's topology.
     // Defined by the figure in https://google.github.io/mediapipe/solutions/pose.
     readonly List<Vector4> linePair = new List<Vector4>{
-        new Vector4(0, 1), new Vector4(1, 2), new Vector4(2, 3), new Vector4(3, 7), new Vector4(0, 4), 
-        new Vector4(4, 5), new Vector4(5, 6), new Vector4(6, 8), new Vector4(9, 10), new Vector4(11, 12), 
-        new Vector4(11, 13), new Vector4(13, 15), new Vector4(15, 17), new Vector4(17, 19), new Vector4(19, 15), 
-        new Vector4(15, 21), new Vector4(12, 14), new Vector4(14, 16), new Vector4(16, 18), new Vector4(18, 20), 
-        new Vector4(20, 16), new Vector4(16, 22), new Vector4(11, 23), new Vector4(12, 24), new Vector4(23, 24), 
-        new Vector4(23, 25), new Vector4(25, 27), new Vector4(27, 29), new Vector4(29, 31), new Vector4(31, 27), 
+        new Vector4(0, 1), new Vector4(1, 2), new Vector4(2, 3), new Vector4(3, 7), new Vector4(0, 4),
+        new Vector4(4, 5), new Vector4(5, 6), new Vector4(6, 8), new Vector4(9, 10), new Vector4(11, 12),
+        new Vector4(11, 13), new Vector4(13, 15), new Vector4(15, 17), new Vector4(17, 19), new Vector4(19, 15),
+        new Vector4(15, 21), new Vector4(12, 14), new Vector4(14, 16), new Vector4(16, 18), new Vector4(18, 20),
+        new Vector4(20, 16), new Vector4(16, 22), new Vector4(11, 23), new Vector4(12, 24), new Vector4(23, 24),
+        new Vector4(23, 25), new Vector4(25, 27), new Vector4(27, 29), new Vector4(29, 31), new Vector4(31, 27),
         new Vector4(24, 26), new Vector4(26, 28), new Vector4(28, 30), new Vector4(30, 32), new Vector4(32, 28)
     };
 
@@ -57,26 +57,27 @@ public class Visuallizer : MonoBehaviour
     void LateUpdate()
     {
         var inputImage = webCamInput.webCamImage;
-        if(inputImage == null) return;
+        if (inputImage == null) return;
         image.texture = inputImage;
-        if(motionCapture == null) return;
+        if (motionCapture == null) return;
         motionCapture.AvatarPoseRender(inputImage, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isUpperBodyOnly, lerpPercentage, holisticMocapType);
         SetCommandBuffer();
     }
 
-    void SetCommandBuffer() {
+    void SetCommandBuffer()
+    {
         commandBuffer.Clear();
-        if(holisticMocapType != HolisticMocapType.face_only) PoseRender();
-        if(holisticMocapType == HolisticMocapType.pose_only) return;
+        if (holisticMocapType != HolisticMocapType.face_only) PoseRender();
+        if (holisticMocapType == HolisticMocapType.pose_only) return;
 
-        if( holisticMocapType == HolisticMocapType.full || 
-            holisticMocapType == HolisticMocapType.pose_and_face || 
+        if (holisticMocapType == HolisticMocapType.full ||
+            holisticMocapType == HolisticMocapType.pose_and_face ||
             holisticMocapType == HolisticMocapType.face_only)
         {
             FaceRender();
         }
 
-        if( holisticMocapType == HolisticMocapType.full || 
+        if (holisticMocapType == HolisticMocapType.full ||
             holisticMocapType == HolisticMocapType.pose_and_hand)
         {
             HandRender(false);
@@ -84,9 +85,11 @@ public class Visuallizer : MonoBehaviour
         }
     }
 
-    void PoseRender(){
+    void PoseRender()
+    {
         float score = motionCapture.holisticPipeline.GetPoseLandmark(motionCapture.holisticPipeline.poseVertexCount).x;
-        if(score < humanPoseThreshold) {
+        if (score < humanPoseThreshold)
+        {
             return;
         }
 
@@ -108,8 +111,10 @@ public class Visuallizer : MonoBehaviour
         commandBuffer.DrawProcedural(Matrix4x4.identity, poseMaterial, 1, MeshTopology.Triangles, 6, motionCapture.holisticPipeline.poseVertexCount);
     }
 
-    void FaceRender(){
-        if(motionCapture.holisticPipeline.faceDetectionScore < faceScoreThreshold) {
+    void FaceRender()
+    {
+        if (motionCapture.holisticPipeline.faceDetectionScore < faceScoreThreshold)
+        {
             return;
         }
 
@@ -135,9 +140,11 @@ public class Visuallizer : MonoBehaviour
         commandBuffer.DrawProcedural(Matrix4x4.identity, faceMeshMaterial, 1, MeshTopology.Lines, 64, 1, faceMaterialPropertyBlock);
     }
 
-    void HandRender(bool isRight){
+    void HandRender(bool isRight)
+    {
         float score = isRight ? motionCapture.holisticPipeline.rightHandDetectionScore : motionCapture.holisticPipeline.leftHandDetectionScore;
-        if(score < handScoreThreshold) {
+        if (score < handScoreThreshold)
+        {
             return;
         }
 
@@ -157,36 +164,44 @@ public class Visuallizer : MonoBehaviour
         commandBuffer.DrawProcedural(Matrix4x4.identity, handMaterial, 1, MeshTopology.Lines, 2, 4 * 5 + 1);
     }
 
-    void OnDestroy(){
+    void OnDestroy()
+    {
         // Must call Dispose method when no longer in use.
-        if(motionCapture != null){
+        if (motionCapture != null)
+        {
             motionCapture.Dispose();
         }
         commandBuffer.Release();
     }
 
-    public void SetAnimator(Animator avatar){
-        if(avatarAnimator != null) {
+    public void SetAnimator(Animator avatar)
+    {
+        if (avatarAnimator != null)
+        {
             Destroy(avatarAnimator.gameObject);
         }
-        if(motionCapture != null) {
+        if (motionCapture != null)
+        {
             motionCapture.Dispose();
         }
         avatarAnimator = avatar;
         motionCapture = new HolisticMotionCapture(avatar);
     }
 
-    public void SetHolisticMocapType(HolisticMocapType type){
+    public void SetHolisticMocapType(HolisticMocapType type)
+    {
         holisticMocapType = type;
         ResetPose();
     }
 
-    public void ResetPose(){
-        if(motionCapture == null) return;
+    public void ResetPose()
+    {
+        if (motionCapture == null) return;
         motionCapture.ResetAvatar(1);
     }
 
-    public void SetIsUpperBodyOnly(bool isUpperBodyOnly) {
+    public void SetIsUpperBodyOnly(bool isUpperBodyOnly)
+    {
         this.isUpperBodyOnly = isUpperBodyOnly;
         ResetPose();
     }

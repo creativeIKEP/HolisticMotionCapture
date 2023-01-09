@@ -25,7 +25,7 @@ public class WebCamCtrlUI : MonoBehaviour
         var webcamSelectOptions = new List<string>();
         foreach (var d in devices)
         {
-            if (d.name != "Unity Video Capture") webcamSelectOptions.Add(d.name);
+            if (d.name != "HolisticMotionCapture") webcamSelectOptions.Add(d.name);
         }
         webcamSelect.ClearOptions();
         webcamSelect.AddOptions(webcamSelectOptions);

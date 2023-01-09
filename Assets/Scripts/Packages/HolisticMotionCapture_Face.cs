@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using VRM;
@@ -67,18 +66,6 @@ partial class HolisticMotionCapture
 
     void ResetFace()
     {
-        proxy.SetValues(new Dictionary<BlendShapeKey, float>
-        {
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.A), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.I), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.U), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.E), 0},
-            {BlendShapeKey.CreateFromPreset(BlendShapePreset.O), 0},
-        });
-
-
         var leftPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.LeftEye);
         var rightPupilBoneTrans = avatar.GetBoneTransform(HumanBodyBones.RightEye);
         if (leftPupilBoneTrans != null)
@@ -89,6 +76,18 @@ partial class HolisticMotionCapture
         {
             rightPupilBoneTrans.localRotation = Quaternion.Euler(Vector3.zero);
         }
+
+        if (proxy == null) return;
+        proxy.SetValues(new Dictionary<BlendShapeKey, float>
+        {
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.A), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.I), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.U), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.E), 0},
+            {BlendShapeKey.CreateFromPreset(BlendShapePreset.O), 0},
+        });
     }
 
     void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold)

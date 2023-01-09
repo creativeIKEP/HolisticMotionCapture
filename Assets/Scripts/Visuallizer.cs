@@ -8,7 +8,6 @@ public class Visuallizer : MonoBehaviour
     [SerializeField] Camera predictResultCamera;
     [SerializeField] WebCamCtrlUI webCamInput;
     [SerializeField] RawImage image;
-    [SerializeField] bool isUpperBodyOnly = false;
     [SerializeField, Range(0, 1)] float lerpPercentage = 0.3f;
     [SerializeField] Shader poseShader;
     [SerializeField, Range(0, 1)] float humanPoseThreshold = 0.5f;
@@ -20,6 +19,7 @@ public class Visuallizer : MonoBehaviour
     
 
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
+    bool isUpperBodyOnly;
     Animator avatarAnimator;
     HolisticMotionCapture motionCapture;
     Material poseMaterial;
@@ -178,10 +178,16 @@ public class Visuallizer : MonoBehaviour
 
     public void SetHolisticMocapType(HolisticMocapType type){
         holisticMocapType = type;
+        ResetPose();
     }
 
     public void ResetPose(){
         if(motionCapture == null) return;
         motionCapture.ResetAvatar(1);
+    }
+
+    public void SetIsUpperBodyOnly(bool isUpperBodyOnly) {
+        this.isUpperBodyOnly = isUpperBodyOnly;
+        ResetPose();
     }
 }

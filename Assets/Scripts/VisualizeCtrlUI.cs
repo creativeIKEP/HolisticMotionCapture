@@ -18,6 +18,7 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Toggle mirrorModeToggle;
     [SerializeField] Toggle captureToggle;
     [SerializeField] Dropdown hmcTypeSelect;
+    [SerializeField] Toggle isUpperBodyOnlyToggle;
     
     readonly string loadedImagePath = "/LoadedImages";
     readonly string backOffName = "None";
@@ -45,6 +46,7 @@ public class VisualizeCtrlUI : MonoBehaviour
         CreateImageOptions();
         CaptureSwitched();
         CreateHolisticMocapTypeOptions();
+        ChangeIsUpperBodyOnly();
     }
 
     void CreateImageOptions(){
@@ -77,6 +79,10 @@ public class VisualizeCtrlUI : MonoBehaviour
             var selectedType = (HolisticMocapType)Enum.ToObject(typeof(HolisticMocapType), selectValue);
             visuallizer.SetHolisticMocapType(selectedType);
         });
+    }
+
+    public void ChangeIsUpperBodyOnly() {
+        visuallizer.SetIsUpperBodyOnly(isUpperBodyOnlyToggle.isOn);
     }
 
     public void VrmFileLoad(){

@@ -15,6 +15,10 @@ partial class HolisticMotionCapture
     List<LowPassFilter> rightEye_lpfs;
     List<Tuple<int, Vector4>> lpfedRightEyeBuffers;
     
+    float minEarL = 1f;
+    float minEarR = 1f;
+    float maxEarL = 0f;
+    float maxEarR = 0f;
     LowPassFilter leftEyeBlinkLpf;
     LowPassFilter rightEyeBlinkLpf;
     LowPassFilter mouthI_Lpf;
@@ -136,11 +140,6 @@ partial class HolisticMotionCapture
         });
     }
 
-    float minEarL = 1f;
-    float minEarR = 1f;
-    float maxEarL = 0f;
-    float maxEarR = 0f;
-
     Vector2 CalculateEyeBlink(){
         var earL = CalculateEar(true);
         var earR = CalculateEar(false);
@@ -184,14 +183,6 @@ partial class HolisticMotionCapture
         var eyeInnerLidDistance = Vector2.Distance(eyeInnerUpperLid, eyeInnerLowerLid);
         var ear = (eyeOuterLidDistance + eyeInnerLidDistance) / (2 * eyeWidth);
         return ear;
-    }
-
-    float IntegratedBlink(float leftEyeBlink, float rightEyeBlink){
-        var headRot = avatar.GetBoneTransform(HumanBodyBones.Head).rotation;
-        if(0 <= headRot.eulerAngles.y && headRot.eulerAngles.y <= 180){
-            return leftEyeBlink;
-        }
-        return rightEyeBlink;
     }
 
     void PupilRender(){

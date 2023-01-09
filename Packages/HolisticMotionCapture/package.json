@@ -1,0 +1,26 @@
+{
+  "author": {
+    "name": "IKEP",
+    "url": "https://ikep.jp"
+  },
+  "name": "jp.ikep.holistic-motion-capture",
+  "displayName": "HolisticMotionCapture",
+  "description": "Motion capture for avatar holistic body with only a camera.",
+  "version": "1.0.0",
+  "unity": "2020.3",
+  "unityRelease": "11f1",
+  "keywords": [
+    "unity",
+    "avatar",
+    "Motion capture",
+    "VRM",
+    "Barracuda",
+    "Mediapipe",
+    "Holistic"
+  ],
+  "dependencies": {
+    "jp.ikep.mediapipe.holistic": "1.1.0"
+  },
+  "license": "Apache-2.0",
+  "repository": "github:creativeIKEP/HolisticMotionCapture"
+}

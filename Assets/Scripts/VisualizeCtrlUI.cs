@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using HolisticMotionCapture;
 using SFB;
 using VRM;
 #if UNITY_STANDALONE_OSX

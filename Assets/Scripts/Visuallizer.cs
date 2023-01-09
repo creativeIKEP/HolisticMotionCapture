@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
+using HolisticMotionCapture;
 
 public class Visuallizer : MonoBehaviour
 {
@@ -21,7 +22,7 @@ public class Visuallizer : MonoBehaviour
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
     bool isUpperBodyOnly;
     Animator avatarAnimator;
-    HolisticMotionCapture motionCapture;
+    HolisticMotionCapturePipeline motionCapture;
     Material poseMaterial;
     Material faceMeshMaterial;
     MaterialPropertyBlock faceMaterialPropertyBlock;
@@ -185,7 +186,7 @@ public class Visuallizer : MonoBehaviour
             motionCapture.Dispose();
         }
         avatarAnimator = avatar;
-        motionCapture = new HolisticMotionCapture(avatar);
+        motionCapture = new HolisticMotionCapturePipeline(avatar);
     }
 
     public void SetHolisticMocapType(HolisticMocapType type)

@@ -21,6 +21,7 @@ public class Visuallizer : MonoBehaviour
 
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
     bool isUpperBodyOnly;
+    Transform lookTarget;
     Animator avatarAnimator;
     HolisticMotionCapturePipeline motionCapture;
     Material poseMaterial;
@@ -61,7 +62,8 @@ public class Visuallizer : MonoBehaviour
         if (inputImage == null) return;
         image.texture = inputImage;
         if (motionCapture == null) return;
-        motionCapture.AvatarPoseRender(inputImage, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isUpperBodyOnly, lerpPercentage, holisticMocapType);
+        motionCapture.AvatarPoseRender(inputImage, lookTarget, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isUpperBodyOnly, lerpPercentage, holisticMocapType);
+
         SetCommandBuffer();
     }
 
@@ -205,5 +207,17 @@ public class Visuallizer : MonoBehaviour
     {
         this.isUpperBodyOnly = isUpperBodyOnly;
         ResetPose();
+    }
+
+    public void SetMainCameraLook(bool isLookCamera)
+    {
+        if (isLookCamera)
+        {
+            lookTarget = Camera.main.transform;
+        }
+        else
+        {
+            lookTarget = null;
+        }
     }
 }

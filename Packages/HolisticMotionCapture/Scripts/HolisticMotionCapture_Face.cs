@@ -92,7 +92,7 @@ namespace HolisticMotionCapture
         });
         }
 
-        void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold)
+        void FaceRender(HolisticMocapType mocapType, float faceScoreThreshold, Transform lookTargetWorldPosition = null)
         {
             faceCounter++;
             if (faceCounter >= int.MaxValue)
@@ -111,7 +111,16 @@ namespace HolisticMotionCapture
             }
 
             BlinkRender();
-            PupilRender();
+            if (lookTargetWorldPosition != null)
+            {
+                avatar.GetComponent<VRMLookAtHead>().Target = lookTargetWorldPosition;
+                var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
+                headTransform.LookAt(lookTargetWorldPosition);
+            }
+            else
+            {
+                PupilRender();
+            }
             MouthRender();
         }
 

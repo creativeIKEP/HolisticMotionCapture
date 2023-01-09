@@ -33,6 +33,7 @@ namespace HolisticMotionCapture
 
         public void AvatarPoseRender(
             Texture inputTexture,
+            Transform lookTargetWorldPosition = null,
             float poseScoreThreshold = 0.5f,
             float handScoreThreshold = 0.5f,
             float faceScoreThreshold = 0.5f,
@@ -54,7 +55,7 @@ namespace HolisticMotionCapture
             PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
             HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
             HandRender(mocapType, false, handScoreThreshold, lerpPercentage);
-            FaceRender(mocapType, faceScoreThreshold);
+            FaceRender(mocapType, faceScoreThreshold, lookTargetWorldPosition);
         }
 
         public void ResetAvatar(float lerpPercentage = 0.3f)

@@ -20,6 +20,7 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Toggle captureToggle;
     [SerializeField] Dropdown hmcTypeSelect;
     [SerializeField] Toggle isUpperBodyOnlyToggle;
+    [SerializeField] Toggle lookCameraToggle;
 
     readonly string loadedImagePath = "/LoadedImages";
     readonly string backOffName = "None";
@@ -50,6 +51,7 @@ public class VisualizeCtrlUI : MonoBehaviour
         CaptureSwitched();
         CreateHolisticMocapTypeOptions();
         ChangeIsUpperBodyOnly();
+        ChangeLookCamera();
     }
 
     void CreateImageOptions()
@@ -93,6 +95,11 @@ public class VisualizeCtrlUI : MonoBehaviour
     public void ChangeIsUpperBodyOnly()
     {
         visuallizer.SetIsUpperBodyOnly(isUpperBodyOnlyToggle.isOn);
+    }
+
+    public void ChangeLookCamera()
+    {
+        visuallizer.SetMainCameraLook(lookCameraToggle.isOn);
     }
 
     public void VrmFileLoad()

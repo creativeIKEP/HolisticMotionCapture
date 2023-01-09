@@ -160,6 +160,7 @@ namespace HolisticMotionCapture
             {
                 var hipRotation = Quaternion.LookRotation(forward, (spinePosition - hipPosition).normalized) * poseJoints[HumanBodyBones.Hips].inverseRotation * poseJoints[HumanBodyBones.Hips].initRotation;
                 var hipTransform = avatar.GetBoneTransform(HumanBodyBones.Hips);
+                avatar.bodyRotation = Quaternion.Lerp(avatar.bodyRotation, hipTransform.rotation * hipRotation, lerpPercentage);
                 hipTransform.rotation = Quaternion.Lerp(hipTransform.rotation, hipRotation, lerpPercentage);
             }
 

@@ -8,11 +8,19 @@ Pose, face and hands can be moved simultaneously or individually.
 
 You can also output the rendered video to other applications.
 
-## Install
+## Install HolisticMotionCapture application
 
-hoge
+HolisticMotionCapture can be downloaded from [release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases).
 
-## Usage
+### For Windows
+
+Download installer(`HolisticMotionCapture-1.0.0setup.exe` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
+
+### For Mac OS
+
+Download an application(`HolisticMotionCapture.app` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
+
+## Usage HolisticMotionCapture application
 
 ### Load your VRM file
 

@@ -18,7 +18,7 @@ Download installer(`HolisticMotionCapture-1.0.0setup.exe` file) from [1.0.0 rele
 
 ### For Mac OS
 
-Download an application(`HolisticMotionCapture.app` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
+Download installer(`HolisticMotionCapture_Installer.dmg` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
 
 ## Usage HolisticMotionCapture application
 

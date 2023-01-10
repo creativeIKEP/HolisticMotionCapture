@@ -1,3 +1,3 @@
-### [1.0.0] - 2023-xx-xx
+### [1.0.0] - 2023-01-10
 
 This is the first release of HolisticMotionCapture!

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using HolisticMotionCapture;
@@ -13,6 +14,7 @@ using Klak.Syphon;
 public class VisualizeCtrlUI : MonoBehaviour
 {
     [SerializeField] Visuallizer visuallizer;
+    [SerializeField] Dropdown vrmSelectDropdown;
     [SerializeField] Texture defaultTexture;
     [SerializeField] RawImage backGroundTexture;
     [SerializeField] Dropdown backTextureSelect;
@@ -23,9 +25,11 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Toggle isUpperBodyOnlyToggle;
     [SerializeField] Toggle lookCameraToggle;
 
+    readonly string loadedVrmsPath = "/VrmFiles";
     readonly string loadedImagePath = "/LoadedImages";
     readonly string defaultTextureName = "Default";
     readonly string backOffName = "None";
+    string defaultVrmPath;
 
     void Awake()
     {
@@ -44,14 +48,35 @@ public class VisualizeCtrlUI : MonoBehaviour
 
     void Start()
     {
+        defaultVrmPath = Application.dataPath + "/SampleAvatar/SampleAvatar.vrm";
+        ChangeVrm(defaultVrmPath);
         backGroundTexture.texture = defaultTexture;
         backGroundTexture.texture.name = defaultTextureName;
 
+        CreateVrmDropdownOptions();
         CreateImageOptions();
         CaptureSwitched();
         CreateHolisticMocapTypeOptions();
         ChangeIsUpperBodyOnly();
         ChangeLookCamera();
+    }
+
+    void CreateVrmDropdownOptions()
+    {
+        if (!Directory.Exists(Application.persistentDataPath + loadedVrmsPath))
+        {
+            Directory.CreateDirectory(Application.persistentDataPath + loadedVrmsPath);
+        }
+        var vrmPathes = Directory.GetFiles(Application.persistentDataPath + loadedVrmsPath, "*.vrm");
+
+        var vrmSelectOptions = new List<string>();
+        vrmSelectOptions.Add(Path.GetFileNameWithoutExtension(defaultVrmPath));
+        foreach (var path in vrmPathes)
+        {
+            vrmSelectOptions.Add(Path.GetFileNameWithoutExtension(path));
+        }
+        vrmSelectDropdown.ClearOptions();
+        vrmSelectDropdown.AddOptions(vrmSelectOptions);
     }
 
     void CreateImageOptions()
@@ -103,6 +128,20 @@ public class VisualizeCtrlUI : MonoBehaviour
         visuallizer.SetMainCameraLook(lookCameraToggle.isOn);
     }
 
+    public void ChangeVrmFromDropdownUi()
+    {
+        var filename = vrmSelectDropdown.options[vrmSelectDropdown.value].text;
+        var path = Application.persistentDataPath + loadedVrmsPath + "/" + filename + ".vrm";
+        ChangeVrm(path);
+    }
+
+    private async Task ChangeVrm(string path)
+    {
+        var instance = await VrmUtility.LoadAsync(path);
+        instance.ShowMeshes();
+        visuallizer.SetAnimator(instance.GetComponent<Animator>());
+    }
+
     public void VrmFileLoad()
     {
         var extensions = new[]{
@@ -118,9 +157,17 @@ public class VisualizeCtrlUI : MonoBehaviour
             var extension = Path.GetExtension(path).ToLower();
             if (extension != ".vrm") return;
 
-            var instance = await VrmUtility.LoadAsync(path);
-            instance.ShowMeshes();
-            visuallizer.SetAnimator(instance.GetComponent<Animator>());
+            await ChangeVrm(path);
+
+            var filename = Path.GetFileNameWithoutExtension(path) + ".vrm";
+            var savePath = Application.persistentDataPath + loadedVrmsPath + "/" + filename;
+            File.Copy(path, savePath, true);
+
+            var option = new Dropdown.OptionData();
+            option.text = Path.GetFileNameWithoutExtension(path);
+            vrmSelectDropdown.options.Add(option);
+            vrmSelectDropdown.value = vrmSelectDropdown.options.Count - 1;
+            vrmSelectDropdown.RefreshShownValue();
         });
     }
 
@@ -173,6 +220,7 @@ public class VisualizeCtrlUI : MonoBehaviour
             option.text = filename;
             backTextureSelect.options.Add(option);
             backTextureSelect.value = backTextureSelect.options.Count - 1;
+            backTextureSelect.RefreshShownValue();
         });
     }
 

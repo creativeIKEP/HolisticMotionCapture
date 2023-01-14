@@ -26,10 +26,13 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Toggle lookCameraToggle;
 
     readonly string loadedVrmsPath = "/VrmFiles";
+    string defaultVrmPath;
+    readonly string avatarPlayerPrefsKey = "SelectedVrmFileName";
     readonly string loadedImagePath = "/LoadedImages";
     readonly string defaultTextureName = "Default";
     readonly string backOffName = "None";
-    string defaultVrmPath;
+    readonly string backImagePlayerPrefsKey = "SelectedBackgroundImageFileName";
+
 
     void Awake()
     {
@@ -48,17 +51,47 @@ public class VisualizeCtrlUI : MonoBehaviour
 
     void Start()
     {
-        defaultVrmPath = Application.dataPath + "/SampleAvatar/SampleAvatar.vrm";
-        ChangeVrm(defaultVrmPath);
-        backGroundTexture.texture = defaultTexture;
-        backGroundTexture.texture.name = defaultTextureName;
-
+        defaultVrmPath = Application.dataPath + "/DefaultSampleAvatar/DefaultSampleAvatar.vrm";
         CreateVrmDropdownOptions();
         CreateImageOptions();
         CaptureSwitched();
         CreateHolisticMocapTypeOptions();
         ChangeIsUpperBodyOnly();
         ChangeLookCamera();
+
+        var lastOpenVrm = PlayerPrefs.GetString(avatarPlayerPrefsKey);
+        var initVrm = string.IsNullOrEmpty(lastOpenVrm) ? defaultVrmPath : lastOpenVrm;
+        ChangeVrm(initVrm);
+        for (int i = 0; i < vrmSelectDropdown.options.Count; i++)
+        {
+            var option = vrmSelectDropdown.options[i];
+            if (option.text == initVrm)
+            {
+                vrmSelectDropdown.value = i;
+                vrmSelectDropdown.RefreshShownValue();
+                break;
+            }
+        }
+
+        var lastOpenbackImage = PlayerPrefs.GetString(backImagePlayerPrefsKey);
+        var initBackImage = string.IsNullOrEmpty(lastOpenbackImage) ? defaultTextureName : lastOpenbackImage;
+        ChangeBackTextureFromFileName(initBackImage);
+        for (int i = 0; i < backTextureSelect.options.Count; i++)
+        {
+            var option = backTextureSelect.options[i];
+            if (option.text == initBackImage)
+            {
+                backTextureSelect.value = i;
+                backTextureSelect.RefreshShownValue();
+                break;
+            }
+        }
+    }
+
+    void OnDestroy()
+    {
+        PlayerPrefs.SetString(avatarPlayerPrefsKey, vrmSelectDropdown.options[vrmSelectDropdown.value].text);
+        PlayerPrefs.SetString(backImagePlayerPrefsKey, backTextureSelect.options[backTextureSelect.value].text);
     }
 
     void CreateVrmDropdownOptions()
@@ -131,12 +164,16 @@ public class VisualizeCtrlUI : MonoBehaviour
     public void ChangeVrmFromDropdownUi()
     {
         var filename = vrmSelectDropdown.options[vrmSelectDropdown.value].text;
-        var path = Application.persistentDataPath + loadedVrmsPath + "/" + filename + ".vrm";
-        ChangeVrm(path);
+        ChangeVrm(filename);
     }
 
-    private async Task ChangeVrm(string path)
+    private async Task ChangeVrm(string filename)
     {
+        var path = Application.persistentDataPath + loadedVrmsPath + "/" + filename + ".vrm";
+        if (filename == Path.GetFileNameWithoutExtension(defaultVrmPath))
+        {
+            path = defaultVrmPath;
+        }
         var instance = await VrmUtility.LoadAsync(path);
         instance.ShowMeshes();
         visuallizer.SetAnimator(instance.GetComponent<Animator>());
@@ -174,6 +211,11 @@ public class VisualizeCtrlUI : MonoBehaviour
     public void ChangeBackTexture()
     {
         var filename = backTextureSelect.options[backTextureSelect.value].text;
+        ChangeBackTextureFromFileName(filename);
+    }
+
+    private void ChangeBackTextureFromFileName(string filename)
+    {
         if (filename == defaultTexture.name)
         {
             backGroundTexture.texture = defaultTexture;

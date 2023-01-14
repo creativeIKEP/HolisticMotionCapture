@@ -61,7 +61,7 @@ public class VisualizeCtrlUI : MonoBehaviour
 
         var lastOpenVrm = PlayerPrefs.GetString(avatarPlayerPrefsKey);
         var initVrm = string.IsNullOrEmpty(lastOpenVrm) ? defaultVrmPath : lastOpenVrm;
-        ChangeVrm(initVrm);
+        ChangeVrmFromFileName(initVrm);
         for (int i = 0; i < vrmSelectDropdown.options.Count; i++)
         {
             var option = vrmSelectDropdown.options[i];
@@ -164,19 +164,26 @@ public class VisualizeCtrlUI : MonoBehaviour
     public void ChangeVrmFromDropdownUi()
     {
         var filename = vrmSelectDropdown.options[vrmSelectDropdown.value].text;
-        ChangeVrm(filename);
+        ChangeVrmFromFileName(filename);
     }
 
-    private async Task ChangeVrm(string filename)
+    private async Task ChangeVrmFromFileName(string filename)
     {
         var path = Application.persistentDataPath + loadedVrmsPath + "/" + filename + ".vrm";
         if (filename == Path.GetFileNameWithoutExtension(defaultVrmPath))
         {
             path = defaultVrmPath;
         }
+        await ChangeVrmFromPath(path);
+    }
+
+    private async Task ChangeVrmFromPath(string path)
+    {
         var instance = await VrmUtility.LoadAsync(path);
         instance.ShowMeshes();
-        visuallizer.SetAnimator(instance.GetComponent<Animator>());
+        var animator = instance.GetComponent<Animator>();
+        visuallizer.SetAnimator(animator);
+        Camera.main.transform.position = animator.GetBoneTransform(HumanBodyBones.Head).position + Vector3.forward * 0.8f;
     }
 
     public void VrmFileLoad()
@@ -194,7 +201,7 @@ public class VisualizeCtrlUI : MonoBehaviour
             var extension = Path.GetExtension(path).ToLower();
             if (extension != ".vrm") return;
 
-            await ChangeVrm(path);
+            await ChangeVrmFromPath(path);
 
             var filename = Path.GetFileNameWithoutExtension(path) + ".vrm";
             var savePath = Application.persistentDataPath + loadedVrmsPath + "/" + filename;

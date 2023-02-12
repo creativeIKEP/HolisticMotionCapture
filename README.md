@@ -14,17 +14,21 @@ HolisticMotionCapture can be downloaded from [release page](https://github.com/c
 
 ### For Windows
 
-Download installer(`HolisticMotionCapture-1.0.0setup.exe` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
+Download installer(`HolisticMotionCapture-1.1.0setup.exe` file) from [1.1.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.1.0) and execute it.
 
 ### For Mac OS
 
-Download installer(`HolisticMotionCapture_Installer.dmg` file) from [1.0.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.0.0) and execute it.
+Download installer(`HolisticMotionCapture_Installer.dmg` file) from [1.1.0 release page](https://github.com/creativeIKEP/HolisticMotionCapture/releases/tag/v1.1.0) and execute it.
 
 ## Usage HolisticMotionCapture application
 
-### Load your VRM file
+### Select your VRM file
 
-Push the `Load VRM` for loading your VRM file.
+- You can change to your vrm avatar from pull down.
+- Images are loaded from and save to `C:/Users/<user name>/AppData/LocalLow/IKEP/HolisticMotionCapture/VrmFiles` directory in Windows.
+- Images are loaded from and save to `/Users/<user name>/Library/Application Support/IKEP/HolisticMotionCapture/VrmFiles` directory in Mac OS.
+- You can load new vrm avatar from the `New VRM` button.
+  - You can continue to use the vrm file is loaded once, if application is restarting.
 
 ### Image Device
 
@@ -90,7 +94,7 @@ To the `scopedRegistries` section:
 To the `dependencies` section:
 
 ```
-"jp.ikep.holistic-motion-capture": "1.0.0"
+"jp.ikep.holistic-motion-capture": "1.1.0"
 ```
 
 Finally, the manifest file looks like below:
@@ -110,7 +114,7 @@ Finally, the manifest file looks like below:
         }
     ],
     "dependencies": {
-        "jp.ikep.holistic-motion-capture": "1.0.0",
+        "jp.ikep.holistic-motion-capture": "1.1.0",
         ...
     }
 }

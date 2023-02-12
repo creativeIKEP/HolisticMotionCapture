@@ -51,7 +51,7 @@ public class VisualizeCtrlUI : MonoBehaviour
 
     void Start()
     {
-        defaultVrmPath = Application.dataPath + "/DefaultSampleAvatar/DefaultSampleAvatar.vrm";
+        defaultVrmPath = Application.streamingAssetsPath + "/DefaultSampleAvatar.vrm";
         CreateVrmDropdownOptions();
         CreateImageOptions();
         CaptureSwitched();

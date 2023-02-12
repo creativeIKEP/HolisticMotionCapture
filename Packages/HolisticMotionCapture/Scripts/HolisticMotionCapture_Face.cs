@@ -8,6 +8,7 @@ namespace HolisticMotionCapture
     partial class HolisticMotionCapturePipeline
     {
         VRMBlendShapeProxy proxy;
+        VRMLookAtHead vrmLookAtHead;
         int faceCounter;
         List<LowPassFilter> face_lpfs;
         List<Tuple<int, Vector4>> lpfedFaceBuffers;
@@ -31,6 +32,7 @@ namespace HolisticMotionCapture
         void FaceInit()
         {
             proxy = avatar.GetComponent<VRMBlendShapeProxy>();
+            vrmLookAtHead = avatar.GetComponent<VRMLookAtHead>();
 
             face_lpfs = new List<LowPassFilter>();
             lpfedFaceBuffers = new List<Tuple<int, Vector4>>();
@@ -113,12 +115,13 @@ namespace HolisticMotionCapture
             BlinkRender();
             if (lookTargetWorldPosition != null)
             {
-                avatar.GetComponent<VRMLookAtHead>().Target = lookTargetWorldPosition;
+                vrmLookAtHead.Target = lookTargetWorldPosition;
                 var headTransform = avatar.GetBoneTransform(HumanBodyBones.Head);
                 headTransform.LookAt(lookTargetWorldPosition);
             }
             else
             {
+                vrmLookAtHead.Target = null;
                 PupilRender();
             }
             MouthRender();

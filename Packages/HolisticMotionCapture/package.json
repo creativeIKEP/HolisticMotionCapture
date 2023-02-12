@@ -6,7 +6,7 @@
   "name": "jp.ikep.holistic-motion-capture",
   "displayName": "HolisticMotionCapture",
   "description": "Motion capture for avatar holistic body with only a camera.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2020.3",
   "unityRelease": "11f1",
   "keywords": [

@@ -10,7 +10,6 @@ public class CameraMove : MonoBehaviour
     [SerializeField] CanvasGroup controlCanvas;
     [SerializeField] Camera PredictionCamera;
 
-    bool isDragging = false;
     bool isUiShow = true;
 
     public void OnClick(BaseEventData data)

@@ -22,6 +22,7 @@
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.unitywebrequestwww": "1.0.0",
+    "jp.ikep.mediapipe.selfiesegmentation": "1.0.1",
     "jp.keijiro.klak.syphon": "0.0.4"
   }
 }

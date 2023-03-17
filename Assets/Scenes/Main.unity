@@ -7395,14 +7395,16 @@ MonoBehaviour:
   predictResultCamera: {fileID: 1657563702}
   webCamInput: {fileID: 1587756040}
   image: {fileID: 381058041}
-  lerpPercentage: 0.3
+  lerpPercentage: 0.5
   poseShader: {fileID: 4800000, guid: c8fe6886e54b6b842bf572852e80b51d, type: 3}
-  humanPoseThreshold: 0.5
+  humanPoseThreshold: 0.9
   faceShader: {fileID: 4800000, guid: 7f88ef98500ae914280808663a89b160, type: 3}
   faceLineTemplateMesh: {fileID: 4300000, guid: 4d1b450bb6d281641af6c72e8b37cfcb, type: 2}
   faceScoreThreshold: 0.5
   handShader: {fileID: 4800000, guid: 1c45c99fd2605fb48b7636b731714bf1, type: 3}
   handScoreThreshold: 0.5
+  resource: {fileID: 11400000, guid: eb484eba4b22b9848bf7b2dcbda7e01b, type: 2}
+  segmentationShader: {fileID: 4800000, guid: 6b5ee220989787840b6dc83db5a3aa39, type: 3}
 --- !u!114 &1587756040
 MonoBehaviour:
   m_ObjectHideFlags: 0

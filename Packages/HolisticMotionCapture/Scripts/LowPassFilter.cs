@@ -83,5 +83,17 @@ namespace HolisticMotionCapture
             return Vector3.Lerp(p_dx_v, dx, Alpha(1, dt));
         }
         #endregion
+
+        #region Quaternion LPF
+        Quaternion p_x_q;
+        Quaternion p_dx_q;
+        Quaternion average;
+
+        public Quaternion Filter(Quaternion x, float t)
+        {
+            average = Quaternion.Lerp(average, x, 0.5f * t);
+            return average;
+        }
+        #endregion
     }
 }

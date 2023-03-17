@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 using HolisticMotionCapture;
+using Mediapipe.SelfieSegmentation;
 
 public class Visuallizer : MonoBehaviour
 {
@@ -17,6 +18,8 @@ public class Visuallizer : MonoBehaviour
     [SerializeField, Range(0, 1)] float faceScoreThreshold = 0.5f;
     [SerializeField] Shader handShader;
     [SerializeField, Range(0, 1)] float handScoreThreshold = 0.5f;
+    [SerializeField] SelfieSegmentationResource resource;
+    [SerializeField] Shader segmentationShader;
 
 
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
@@ -30,6 +33,10 @@ public class Visuallizer : MonoBehaviour
     Material leftHandMaterial;
     Material rightHandMaterial;
     CommandBuffer commandBuffer;
+
+    SelfieSegmentation segmentation;
+    Material segmentationMaterial;
+    RenderTexture segmentationTexture;
 
     // Lines count of body's topology.
     const int BODY_LINE_NUM = 35;
@@ -54,14 +61,29 @@ public class Visuallizer : MonoBehaviour
         rightHandMaterial = new Material(handShader);
         commandBuffer = new CommandBuffer();
         predictResultCamera.AddCommandBuffer(CameraEvent.AfterEverything, commandBuffer);
+
+        segmentation = new SelfieSegmentation(resource);
+        segmentationMaterial = new Material(segmentationShader);
     }
 
     void LateUpdate()
     {
         var inputImage = webCamInput.webCamImage;
         if (inputImage == null) return;
-        image.texture = inputImage;
+        // image.texture = inputImage;
         if (motionCapture == null) return;
+
+        if (segmentationTexture == null || segmentationTexture.width != inputImage.width || segmentationTexture.height != inputImage.height)
+        {
+            segmentationTexture?.Release();
+            segmentationTexture = new RenderTexture(inputImage.width, inputImage.height, 0);
+        }
+
+        segmentation.ProcessImage(inputImage);
+        segmentationMaterial.SetTexture("_inputImage", inputImage);
+        Graphics.Blit(segmentation.texture, segmentationTexture, segmentationMaterial);
+        image.texture = segmentationTexture;
+
         motionCapture.AvatarPoseRender(inputImage, lookTarget, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isUpperBodyOnly, lerpPercentage, holisticMocapType);
 
         SetCommandBuffer();
@@ -175,6 +197,8 @@ public class Visuallizer : MonoBehaviour
             motionCapture.Dispose();
         }
         commandBuffer.Release();
+
+        segmentationTexture?.Release();
     }
 
     public void SetAnimator(Animator avatar)

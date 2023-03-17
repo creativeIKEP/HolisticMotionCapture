@@ -9,6 +9,7 @@ namespace HolisticMotionCapture
         public HumanBodyBones childBone;
         public Quaternion initRotation;
         public Quaternion inverseRotation;
+        public LowPassFilter filter;
 
         public Joint(HumanBodyBones bone, HumanBodyBones parent, HumanBodyBones child, Quaternion initRot, Quaternion inverseRot)
         {
@@ -17,6 +18,7 @@ namespace HolisticMotionCapture
             childBone = child;
             initRotation = initRot;
             inverseRotation = inverseRot;
+            filter = new LowPassFilter(1, 1);
         }
     };
 }

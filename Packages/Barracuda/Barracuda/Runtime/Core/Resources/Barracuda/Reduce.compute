@@ -1,0 +1,334 @@
+// TODO fast ArgMax
+#pragma kernel PartialReduceMin LOOP=0 REDUCEMIN PARTIALSUFFIX=PartialReduceMin
+#pragma kernel PartialReduceMin_Loop LOOP=1 REDUCEMIN PARTIALSUFFIX=PartialReduceMin
+#pragma kernel GlobalReduceMin LOOP=0 REDUCEMIN GLOBALSUFFIX=GlobalReduceMin
+#pragma kernel GlobalReduceMin_Loop LOOP=1 REDUCEMIN GLOBALSUFFIX=GlobalReduceMin
+
+#pragma kernel PartialReduceMax LOOP=0 REDUCEMAX PARTIALSUFFIX=PartialReduceMax
+#pragma kernel PartialReduceMax_Loop LOOP=1 REDUCEMAX PARTIALSUFFIX=PartialReduceMax
+#pragma kernel GlobalReduceMax LOOP=0 REDUCEMAX GLOBALSUFFIX=GlobalReduceMax
+#pragma kernel GlobalReduceMax_Loop LOOP=1 REDUCEMAX GLOBALSUFFIX=GlobalReduceMax
+
+#pragma kernel PartialReduceSum LOOP=0 REDUCESUM PARTIALSUFFIX=PartialReduceSum
+#pragma kernel PartialReduceSum_Loop LOOP=1 REDUCESUM PARTIALSUFFIX=PartialReduceSum
+#pragma kernel GlobalReduceSum LOOP=0 REDUCESUM GLOBALSUFFIX=GlobalReduceSum
+#pragma kernel GlobalReduceSum_Loop LOOP=1 REDUCESUM GLOBALSUFFIX=GlobalReduceSum
+
+#pragma kernel PartialReduceMean LOOP=0 REDUCEMEAN PARTIALSUFFIX=PartialReduceMean
+#pragma kernel PartialReduceMean_Loop LOOP=1 REDUCEMEAN PARTIALSUFFIX=PartialReduceMean
+#pragma kernel GlobalReduceMean LOOP=0 REDUCEMEAN GLOBALSUFFIX=GlobalReduceMean
+#pragma kernel GlobalReduceMean_Loop LOOP=1 REDUCEMEAN GLOBALSUFFIX=GlobalReduceMean
+
+#pragma kernel PartialReduceProd LOOP=0 REDUCEPROD PARTIALSUFFIX=PartialReduceProd
+#pragma kernel PartialReduceProd_Loop LOOP=1 REDUCEPROD PARTIALSUFFIX=PartialReduceProd
+#pragma kernel GlobalReduceProd LOOP=0 REDUCEPROD GLOBALSUFFIX=GlobalReduceProd
+#pragma kernel GlobalReduceProd_Loop LOOP=1 REDUCEPROD GLOBALSUFFIX=GlobalReduceProd
+
+#pragma kernel PartialReduceExpBias LOOP=0 REDUCEEXPBIAS PARTIALSUFFIX=PartialReduceExpBias
+#pragma kernel PartialReduceExpBias_Loop LOOP=1 REDUCEEXPBIAS PARTIALSUFFIX=PartialReduceExpBias
+#pragma kernel GlobalReduceExpBias LOOP=0 REDUCEEXPBIAS GLOBALSUFFIX=GlobalReduceExpBias
+#pragma kernel GlobalReduceExpBias_Loop LOOP=1 REDUCEEXPBIAS GLOBALSUFFIX=GlobalReduceExpBias
+
+#include "Tensor.cginc"
+#include "Random.cginc"
+
+TENSOR_DECL(X)
+TENSOR_DECL(B)
+TENSOR_DECL_RW(O)
+
+uint _ReducedDim;
+uint3 _Pool;
+uint _UnrolledH;
+uint _UnrolledW;
+int _IsFirstDispatch;
+
+
+#undef REDUCE_FUNC_NAME
+#undef REDUCE_FUNC_NAME_CALL
+#if LOOP
+#define REDUCE_FUNC_NAME_CALL(KERNEL) KERNEL##_Loop
+#else
+#define REDUCE_FUNC_NAME_CALL(KERNEL) KERNEL
+#endif
+#define REDUCE_FUNC_NAME(KERNEL) REDUCE_FUNC_NAME_CALL(KERNEL)
+
+inline float ReduceDefaultValue()
+{
+#ifdef ARGMAX
+    return -FLT_MAX;
+#endif
+#ifdef ARGMIN
+    return FLT_MAX;
+#endif
+#ifdef REDUCEMIN
+    return FLT_MAX;
+#endif
+#ifdef REDUCEMAX
+    return -FLT_MAX;
+#endif
+#ifdef REDUCEPROD
+    return 1.0;
+#endif
+    return 0.0;
+}
+
+
+inline float ReduceOp(float v, float x)
+{
+#ifdef ARGMAX
+    return max(v, x);
+#endif
+#ifdef ARGMIN
+    return min(v, x);
+#endif
+#ifdef REDUCEMIN
+    return min(v, x);
+#endif
+#ifdef REDUCEMAX
+    return max(v, x);
+#endif
+#ifdef REDUCESUM
+    return v + x;
+#endif
+#ifdef REDUCEMEAN
+    return v + x;
+#endif
+#ifdef REDUCEPROD
+    return v * x;
+#endif
+#ifdef REDUCEEXPBIAS
+    return v + x;
+#endif
+    return v;
+}
+
+#undef POOL_SIZE
+#define POOL_SIZE 64
+
+groupshared float Reduce_PartialSum[POOL_SIZE];
+
+inline void PartialReduceInternalReduce(uint gty, uint s)
+{
+    if (gty < s)
+    {
+        Reduce_PartialSum[gty] = ReduceOp(Reduce_PartialSum[gty], Reduce_PartialSum[gty + s]);
+    }
+    GroupMemoryBarrierWithGroupSync();
+}
+
+[numthreads(1, POOL_SIZE, 1)]
+void REDUCE_FUNC_NAME(PARTIALSUFFIX)(uint3 dispatchThreadID : SV_DispatchThreadID, uint3 groupThreadID : SV_GroupThreadID, uint3 groupId : SV_GroupID)
+{
+    //DISPATCH ARGS(1, O.batch, O.flatwidth);
+    TENSOR_ARGS3(X, B, O);
+
+    uint flatHeight = dispatchThreadID.x;
+    uint flatWidth = dispatchThreadID.z;
+
+    uint strideFlatHeight  = _Pool[0];
+    uint strideFlatWidth   = _Pool[1];
+    uint baseReducedLength = _Pool[2];
+
+    uint strideReducedDim = _ReducedDim;
+
+#if LOOP
+    uint strideFlatHeightUnroll = _UnrolledH;
+    uint strideFlatWidthUnroll  = _UnrolledW;
+#endif
+
+
+
+    uint gty = groupThreadID.y;
+    uint gy = groupId.y;
+
+    // https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
+    // half the number of blocks (x) replaced with 4 loads
+    uint y = gy * POOL_SIZE * 4 + gty;
+
+    float defaultValue = ReduceDefaultValue();
+
+#if LOOP
+    for (uint fhUnrolled = 0; fhUnrolled < strideFlatHeightUnroll; fhUnrolled++)
+    for (uint fwUnrolled = 0; fwUnrolled < strideFlatWidthUnroll; fwUnrolled++)
+#endif
+    {
+        #if LOOP
+        uint flatHeightIdx = (flatHeight * strideFlatHeightUnroll + fhUnrolled);
+        uint flatWidthIdx  = (flatWidth * strideFlatWidthUnroll + fwUnrolled);
+        float v0 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 0 * POOL_SIZE) < baseReducedLength) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * baseReducedLength + (y + 0 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v1 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 1 * POOL_SIZE) < baseReducedLength) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * baseReducedLength + (y + 1 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v2 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 2 * POOL_SIZE) < baseReducedLength) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * baseReducedLength + (y + 2 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v3 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 3 * POOL_SIZE) < baseReducedLength) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * baseReducedLength + (y + 3 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        #else
+        float v0 = X.MaskedGet((y + 0 * POOL_SIZE) < baseReducedLength, flatHeight * strideFlatWidth * baseReducedLength + (y + 0 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v1 = X.MaskedGet((y + 1 * POOL_SIZE) < baseReducedLength, flatHeight * strideFlatWidth * baseReducedLength + (y + 1 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v2 = X.MaskedGet((y + 2 * POOL_SIZE) < baseReducedLength, flatHeight * strideFlatWidth * baseReducedLength + (y + 2 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v3 = X.MaskedGet((y + 3 * POOL_SIZE) < baseReducedLength, flatHeight * strideFlatWidth * baseReducedLength + (y + 3 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        #endif
+        #ifdef REDUCEEXPBIAS
+            if (_IsFirstDispatch)
+            {
+                #if LOOP
+                bool maskv0 = (flatHeightIdx < strideFlatHeight) && ((y + 0 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv1 = (flatHeightIdx < strideFlatHeight) && ((y + 1 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv2 = (flatHeightIdx < strideFlatHeight) && ((y + 2 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv3 = (flatHeightIdx < strideFlatHeight) && ((y + 3 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                float m0 = B.MaskedGet((flatHeightIdx < strideFlatHeight) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth + flatWidthIdx, defaultValue);
+                #else
+                bool maskv0 = (y + 0 * POOL_SIZE) < baseReducedLength;
+                bool maskv1 = (y + 1 * POOL_SIZE) < baseReducedLength;
+                bool maskv2 = (y + 2 * POOL_SIZE) < baseReducedLength;
+                bool maskv3 = (y + 3 * POOL_SIZE) < baseReducedLength;
+                float m0 = B.FastGet(flatHeight * strideFlatWidth + flatWidth);
+                #endif
+                v0 = maskv0 ? exp(v0 - m0) : defaultValue;
+                v1 = maskv1 ? exp(v1 - m0) : defaultValue;
+                v2 = maskv2 ? exp(v2 - m0) : defaultValue;
+                v3 = maskv3 ? exp(v3 - m0) : defaultValue;
+            }
+        #endif
+        Reduce_PartialSum[gty] = ReduceOp(v0, ReduceOp(v1, ReduceOp(v2, v3)));
+
+        GroupMemoryBarrierWithGroupSync();
+
+        // sequential addressing
+        // mem = [x0...xn y0..yn]
+        //     = [x0+y0...xn+yn ...]
+        // last sum saved for last
+        // following code is unrolled:
+        // for s = (POOL_SIZE*POOL_SIZE) / 2; s > 1; s >>= 1
+        PartialReduceInternalReduce(gty, 32);
+        PartialReduceInternalReduce(gty, 16);
+        PartialReduceInternalReduce(gty, 8);
+        PartialReduceInternalReduce(gty, 4);
+        PartialReduceInternalReduce(gty, 2);
+
+        if (gty == 0)
+        {
+            float v = ReduceOp(Reduce_PartialSum[0], Reduce_PartialSum[1]);
+            #if LOOP
+            if ((flatHeightIdx < strideFlatHeight) && (flatWidthIdx < strideFlatWidth))
+                O.FastSet(flatHeightIdx * strideFlatWidth * strideReducedDim + gy * strideFlatWidth + flatWidthIdx, v);
+            #else
+            O.FastSet(flatHeight * strideFlatWidth * strideReducedDim + gy * strideFlatWidth + flatWidth, v);
+            #endif
+        }
+    }
+}
+
+#undef POOL_SIZE
+#define POOL_SIZE 64
+
+groupshared float GlobalReduce_PartialSum[POOL_SIZE];
+
+inline void GlobalReduceInternalReduce(uint gty, uint s)
+{
+    if (gty < s)
+    {
+        GlobalReduce_PartialSum[gty] = ReduceOp(GlobalReduce_PartialSum[gty], GlobalReduce_PartialSum[gty + s]);
+    }
+    GroupMemoryBarrierWithGroupSync();
+}
+
+[numthreads(1, POOL_SIZE, 1)]
+void REDUCE_FUNC_NAME(GLOBALSUFFIX)(uint3 dispatchThreadID : SV_DispatchThreadID, uint3 groupThreadID : SV_GroupThreadID, uint3 groupId : SV_GroupID)
+{
+    //DISPATCH ARGS(1, O.batch, O.flatwidth);
+    TENSOR_ARGS3(X, B, O);
+
+    uint flatHeight = dispatchThreadID.x;
+    uint flatWidth = dispatchThreadID.z;
+
+    uint strideFlatHeight  = _Pool[0];
+    uint strideFlatWidth   = _Pool[1];
+    uint baseReducedLength = _Pool[2];
+
+#if LOOP
+    uint strideFlatHeightUnroll = _UnrolledH;
+    uint strideFlatWidthUnroll = _UnrolledW;
+#endif
+
+    uint strideReducedDim = _ReducedDim;
+
+
+    uint gty = groupThreadID.y;
+    uint gy = groupId.y;
+
+    // https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
+    // half the number of blocks (x) replaced with 4 loads
+    uint y = gy * POOL_SIZE * 4 + gty;
+
+    float defaultValue = ReduceDefaultValue();
+
+#if LOOP
+    for (uint fhUnrolled = 0; fhUnrolled < strideFlatHeightUnroll; fhUnrolled++)
+    for (uint fwUnrolled = 0; fwUnrolled < strideFlatWidthUnroll; fwUnrolled++)
+#endif
+    {
+        #if LOOP
+        uint flatHeightIdx = (flatHeight * strideFlatHeightUnroll + fhUnrolled);
+        uint flatWidthIdx  = (flatWidth * strideFlatWidthUnroll + fwUnrolled);
+        float v0 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 0 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * strideReducedDim + (y + 0 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v1 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 1 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * strideReducedDim + (y + 1 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v2 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 2 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * strideReducedDim + (y + 2 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        float v3 = X.MaskedGet((flatHeightIdx < strideFlatHeight) && ((y + 3 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth * strideReducedDim + (y + 3 * POOL_SIZE) * strideFlatWidth + flatWidthIdx, defaultValue);
+        #else
+        float v0 = X.MaskedGet((y + 0 * POOL_SIZE) < strideReducedDim, flatHeight * strideFlatWidth * strideReducedDim + (y + 0 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v1 = X.MaskedGet((y + 1 * POOL_SIZE) < strideReducedDim, flatHeight * strideFlatWidth * strideReducedDim + (y + 1 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v2 = X.MaskedGet((y + 2 * POOL_SIZE) < strideReducedDim, flatHeight * strideFlatWidth * strideReducedDim + (y + 2 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        float v3 = X.MaskedGet((y + 3 * POOL_SIZE) < strideReducedDim, flatHeight * strideFlatWidth * strideReducedDim + (y + 3 * POOL_SIZE) * strideFlatWidth + flatWidth, defaultValue);
+        #endif
+        #ifdef REDUCEEXPBIAS
+            if (_IsFirstDispatch)
+            {
+                #if LOOP
+                bool maskv0 = (flatHeightIdx < strideFlatHeight) && ((y + 0 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv1 = (flatHeightIdx < strideFlatHeight) && ((y + 1 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv2 = (flatHeightIdx < strideFlatHeight) && ((y + 2 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                bool maskv3 = (flatHeightIdx < strideFlatHeight) && ((y + 3 * POOL_SIZE) < strideReducedDim) && (flatWidthIdx < strideFlatWidth);
+                float m0 = B.MaskedGet((flatHeightIdx < strideFlatHeight) && (flatWidthIdx < strideFlatWidth), flatHeightIdx * strideFlatWidth + flatWidthIdx, defaultValue);
+                #else
+                bool maskv0 = (y + 0 * POOL_SIZE) < baseReducedLength;
+                bool maskv1 = (y + 1 * POOL_SIZE) < baseReducedLength;
+                bool maskv2 = (y + 2 * POOL_SIZE) < baseReducedLength;
+                bool maskv3 = (y + 3 * POOL_SIZE) < baseReducedLength;
+                float m0 = B.FastGet(flatHeight * strideFlatWidth + flatWidth);
+                #endif
+                v0 = maskv0 ? exp(v0 - m0) : defaultValue;
+                v1 = maskv1 ? exp(v1 - m0) : defaultValue;
+                v2 = maskv2 ? exp(v2 - m0) : defaultValue;
+                v3 = maskv3 ? exp(v3 - m0) : defaultValue;
+            }
+        #endif
+        GlobalReduce_PartialSum[gty] = ReduceOp(v0, ReduceOp(v1, ReduceOp(v2, v3)));
+
+        GroupMemoryBarrierWithGroupSync();
+
+        // sequential addressing
+        // mem = [x0...xn y0..yn]
+        //     = [x0+y0...xn+yn ...]
+        // last sum saved for last
+        // following code is unrolled:
+        // for s = (POOL_SIZE*POOL_SIZE) / 2; s > 1; s >>= 1
+        GlobalReduceInternalReduce(gty, 32);
+        GlobalReduceInternalReduce(gty, 16);
+        GlobalReduceInternalReduce(gty, 8);
+        GlobalReduceInternalReduce(gty, 4);
+        GlobalReduceInternalReduce(gty, 2);
+
+        if (gty == 0)
+        {
+            float v = ReduceOp(GlobalReduce_PartialSum[0], GlobalReduce_PartialSum[1]);
+#ifdef REDUCEMEAN
+            // TODO: if stability issues / baseReducedLength at every step
+            v /= baseReducedLength;
+#endif
+            #if LOOP
+            if((flatHeightIdx < strideFlatHeight) && (flatWidthIdx < strideFlatWidth))
+                O.FastSet(flatHeightIdx * strideFlatWidth + flatWidthIdx, v);
+            #else
+            O.FastSet(flatHeight * strideFlatWidth + flatWidth, v);
+            #endif
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Unity.Barracuda.ONNX",
+    "references": [
+        "Unity.Barracuda"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

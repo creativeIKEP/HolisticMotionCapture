@@ -143,8 +143,6 @@ public class MediaPipeRunner : IDisposable
         yield return _resourceManager.PrepareAssetAsync("pose_landmark_full.bytes");
         yield return _resourceManager.PrepareAssetAsync("face_detection_short_range.bytes");
         yield return _resourceManager.PrepareAssetAsync("face_landmark_with_attention.bytes");
-        yield return _resourceManager.PrepareAssetAsync("iris_landmark.bytes");
-        yield return _resourceManager.PrepareAssetAsync("palm_detection_full.bytes");
         yield return _resourceManager.PrepareAssetAsync("hand_recrop.bytes");
         yield return _resourceManager.PrepareAssetAsync("hand_landmark_full.bytes");
         yield return _resourceManager.PrepareAssetAsync("handedness.txt");

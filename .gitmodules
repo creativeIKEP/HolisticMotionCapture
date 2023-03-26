@@ -1,0 +1,3 @@
+[submodule "Barracuda"]
+	path = Barracuda
+	url = https://github.com/Unity-Technologies/barracuda-release.git

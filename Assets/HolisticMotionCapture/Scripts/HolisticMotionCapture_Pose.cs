@@ -18,7 +18,7 @@ namespace HolisticMotionCapture
         {
             pose_lpfs = new List<LowPassFilter>();
             lpfedPoseBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < holisticPipeline.poseVertexCount; i++)
+            for (int i = 0; i < 33; i++)
             {
                 pose_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedPoseBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -131,11 +131,11 @@ namespace HolisticMotionCapture
             if (mocapType == HolisticMocapType.face_only) return;
 
             // Reset pose if huamn is not visible.
-            if (holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold)
-            {
-                ResetPose(lerpPercentage);
-                return;
-            }
+            // if (holisticPipeline.GetPoseWorldLandmark(holisticPipeline.poseVertexCount).x < scoreThreshold)
+            // {
+            //     ResetPose(lerpPercentage);
+            //     return;
+            // }
 
             // Reset pose and update pose in below if mode was changed.
             if (this.isUpperBodyOnly != isUpperBodyOnly)
@@ -245,7 +245,14 @@ namespace HolisticMotionCapture
 
         Vector4 RotatePoseLandmark(int index)
         {
-            var landmark = holisticPipeline.GetPoseWorldLandmark(index);
+            if (holisticPipeline.poseWorldLandmarks == null)
+            {
+                return Vector4.zero;
+            }
+
+            // var landmark = holisticPipeline.GetPoseWorldLandmark(index);
+            var l = holisticPipeline.poseWorldLandmarks.Landmark[index];
+            var landmark = new Vector4(l.X, -l.Y, l.Z, l.Visibility);
 
             // Low pass Filter
             var buffer = lpfedPoseBuffers[index];

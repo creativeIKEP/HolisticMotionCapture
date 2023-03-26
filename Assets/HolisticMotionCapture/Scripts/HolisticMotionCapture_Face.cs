@@ -36,7 +36,7 @@ namespace HolisticMotionCapture
 
             face_lpfs = new List<LowPassFilter>();
             lpfedFaceBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < holisticPipeline.faceVertexCount; i++)
+            for (int i = 0; i < 468; i++)
             {
                 face_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedFaceBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -44,7 +44,7 @@ namespace HolisticMotionCapture
 
             leftEye_lpfs = new List<LowPassFilter>();
             lpfedLeftEyeBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < holisticPipeline.eyeVertexCount; i++)
+            for (int i = 0; i < 76; i++)
             {
                 leftEye_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedLeftEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -52,7 +52,7 @@ namespace HolisticMotionCapture
 
             rightEye_lpfs = new List<LowPassFilter>();
             lpfedRightEyeBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < holisticPipeline.eyeVertexCount; i++)
+            for (int i = 0; i < 76; i++)
             {
                 rightEye_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -107,10 +107,10 @@ namespace HolisticMotionCapture
                 return;
             }
 
-            if (holisticPipeline.faceDetectionScore < faceScoreThreshold)
-            {
-                return;
-            }
+            // if (holisticPipeline.faceDetectionScore < faceScoreThreshold)
+            // {
+            //     return;
+            // }
 
             BlinkRender();
             if (lookTargetWorldPosition != null)
@@ -129,7 +129,14 @@ namespace HolisticMotionCapture
 
         Vector4 FaceLandmark(int index)
         {
-            var landmark = holisticPipeline.GetFaceLandmark(index);
+            if (holisticPipeline.faceLandmarks == null)
+            {
+                return Vector4.zero;
+            }
+
+            // var landmark = holisticPipeline.GetFaceLandmark(index);
+            var l = holisticPipeline.faceLandmarks.Landmark[index];
+            var landmark = new Vector4(l.X, -l.Y, l.Z, 1);
 
             // Low pass Filter
             var buffer = lpfedFaceBuffers[index];
@@ -150,25 +157,28 @@ namespace HolisticMotionCapture
 
         Vector4 EyeLandmark(int index, bool isLeft)
         {
-            var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
+            return Vector4.zero;
+            // MediaPipeUnityPluginは、face: 468, LeftEye: 5, rightEye: 5の順番
 
-            // Low pass Filter
-            var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
-            if (buffer.Item1 == faceCounter)
-            {
-                landmark = buffer.Item2;
-            }
-            else
-            {
-                var score = landmark.w;
-                var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
-                landmark = filter.Filter(landmark, Time.deltaTime);
-                landmark.w = score;
-                if (isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
-                else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
-            }
+            // var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
 
-            return landmark;
+            // // Low pass Filter
+            // var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
+            // if (buffer.Item1 == faceCounter)
+            // {
+            //     landmark = buffer.Item2;
+            // }
+            // else
+            // {
+            //     var score = landmark.w;
+            //     var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
+            //     landmark = filter.Filter(landmark, Time.deltaTime);
+            //     landmark.w = score;
+            //     if (isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+            //     else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+            // }
+
+            // return landmark;
         }
 
         void BlinkRender()

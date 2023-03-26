@@ -1,13 +1,11 @@
 using UnityEngine;
-using MediaPipe.Holistic;
-using Mediapipe.BlazePose;
 
 namespace HolisticMotionCapture
 {
     public partial class HolisticMotionCapturePipeline : System.IDisposable
     {
-        HolisticPipeline _holisticPipeline;
-        public HolisticPipeline holisticPipeline
+        MediaPipeRunner _holisticPipeline;
+        public MediaPipeRunner holisticPipeline
         {
             get { return this._holisticPipeline; }
             private set { this._holisticPipeline = value; }
@@ -17,10 +15,10 @@ namespace HolisticMotionCapture
         const float maxFps = 30.0f;
         float lastPoseUpdateTime;
 
-        public HolisticMotionCapturePipeline(Animator avatarAnimator, BlazePoseModel blazePoseModel = BlazePoseModel.full)
+        public HolisticMotionCapturePipeline(Animator avatarAnimator)
         {
             avatar = avatarAnimator;
-            holisticPipeline = new HolisticPipeline(blazePoseModel);
+            holisticPipeline = new MediaPipeRunner(false);
             HandInit();
             PoseInit();
             FaceInit();
@@ -40,7 +38,7 @@ namespace HolisticMotionCapture
             bool isUpperBodyOnly = false,
             float lerpPercentage = 0.3f,
             HolisticMocapType mocapType = HolisticMocapType.full,
-            BlazePoseModel blazePoseModel = BlazePoseModel.full,
+            // BlazePoseModel blazePoseModel = BlazePoseModel.full,
             float poseDetectionThreshold = 0.75f,
             float poseDetectionIouThreshold = 0.3f)
         {
@@ -51,7 +49,8 @@ namespace HolisticMotionCapture
             }
             lastPoseUpdateTime = nowTime;
 
-            holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
+            // holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
+            holisticPipeline.ProcessImage(inputTexture);
             PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
             HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
             HandRender(mocapType, false, handScoreThreshold, lerpPercentage);

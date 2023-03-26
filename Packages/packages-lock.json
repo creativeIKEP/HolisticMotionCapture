@@ -73,12 +73,6 @@
       },
       "hash": "e16dd2f8c0c15fb373eeef6375c550acc740a2f6"
     },
-    "jp.ikep.holistic-motion-capture": {
-      "version": "file:HolisticMotionCapture",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
     "jp.keijiro.klak.syphon": {
       "version": "0.0.4",
       "depth": 0,

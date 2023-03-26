@@ -25,7 +25,7 @@ public class Visuallizer : MonoBehaviour
     HolisticMocapType holisticMocapType = HolisticMocapType.full;
     bool isUpperBodyOnly;
     Transform lookTarget;
-    Animator avatarAnimator;
+    public Animator avatarAnimator;
     HolisticMotionCapturePipeline motionCapture;
     Material poseMaterial;
     Material faceMeshMaterial;
@@ -70,19 +70,19 @@ public class Visuallizer : MonoBehaviour
     {
         var inputImage = webCamInput.webCamImage;
         if (inputImage == null) return;
-        // image.texture = inputImage;
+        image.texture = inputImage;
         if (motionCapture == null) return;
 
-        if (segmentationTexture == null || segmentationTexture.width != inputImage.width || segmentationTexture.height != inputImage.height)
-        {
-            segmentationTexture?.Release();
-            segmentationTexture = new RenderTexture(inputImage.width, inputImage.height, 0);
-        }
+        // if (segmentationTexture == null || segmentationTexture.width != inputImage.width || segmentationTexture.height != inputImage.height)
+        // {
+        //     segmentationTexture?.Release();
+        //     segmentationTexture = new RenderTexture(inputImage.width, inputImage.height, 0);
+        // }
 
-        segmentation.ProcessImage(inputImage);
-        segmentationMaterial.SetTexture("_inputImage", inputImage);
-        Graphics.Blit(segmentation.texture, segmentationTexture, segmentationMaterial);
-        image.texture = segmentationTexture;
+        // segmentation.ProcessImage(inputImage);
+        // segmentationMaterial.SetTexture("_inputImage", inputImage);
+        // Graphics.Blit(segmentation.texture, segmentationTexture, segmentationMaterial);
+        // image.texture = segmentationTexture;
 
         motionCapture.AvatarPoseRender(inputImage, lookTarget, humanPoseThreshold, handScoreThreshold, faceScoreThreshold, isUpperBodyOnly, lerpPercentage, holisticMocapType);
 

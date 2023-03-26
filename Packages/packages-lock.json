@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.neuecc.unirx": {
+      "version": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts#c244f9a89d05cda62acd0e4572510c2d6843164c",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c244f9a89d05cda62acd0e4572510c2d6843164c"
+    },
     "com.unity.barracuda": {
       "version": "2.0.0-pre.3",
       "depth": 1,
@@ -215,6 +222,18 @@
     "com.unity.modules.jsonserialize": {
       "version": "1.0.0",
       "depth": 2,
+      "source": "builtin",
+      "dependencies": {}
+    },
+    "com.unity.modules.physics": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
+    "com.unity.modules.physics2d": {
+      "version": "1.0.0",
+      "depth": 0,
       "source": "builtin",
       "dependencies": {}
     },

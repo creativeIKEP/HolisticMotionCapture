@@ -96,4 +96,58 @@ namespace HolisticMotionCapture
         }
         #endregion
     }
+
+    public class LowPassFilterVector3
+    {
+        float alpha;
+        Vector3 average;
+
+        public LowPassFilterVector3(float a, Vector3 init)
+        {
+            alpha = a;
+            average = init;
+        }
+
+        public void SetAlpha(float a)
+        {
+            alpha = a;
+        }
+
+        public void Add(Vector3 value)
+        {
+            average = Vector3.Lerp(average, value, alpha);
+        }
+
+        public Vector3 Get()
+        {
+            return average;
+        }
+    }
+
+    public class LowPassFilterQuaternion
+    {
+        float alpha;
+        Quaternion average;
+
+        public LowPassFilterQuaternion(float a, Quaternion init)
+        {
+            alpha = a;
+            average = init;
+        }
+
+        public void SetAlpha(float a)
+        {
+            alpha = a;
+        }
+
+        public void Add(Quaternion value)
+        {
+            average = Quaternion.Lerp(average, value, alpha);
+        }
+
+        public Quaternion Get()
+        {
+            return average;
+        }
+    }
 }

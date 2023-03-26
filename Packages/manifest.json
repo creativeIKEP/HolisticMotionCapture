@@ -22,6 +22,9 @@
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.unitywebrequestwww": "1.0.0",
-    "jp.keijiro.klak.syphon": "0.0.4"
+    "jp.keijiro.klak.syphon": "0.0.4",
+    "com.vrmc.vrmshaders": "https://github.com/vrm-c/UniVRM.git?path=/Assets/VRMShaders#v0.108.0",
+    "com.vrmc.gltf": "https://github.com/vrm-c/UniVRM.git?path=/Assets/UniGLTF#v0.108.0",
+    "com.vrmc.univrm": "https://github.com/vrm-c/UniVRM.git?path=/Assets/VRM#v0.108.0"
   }
 }

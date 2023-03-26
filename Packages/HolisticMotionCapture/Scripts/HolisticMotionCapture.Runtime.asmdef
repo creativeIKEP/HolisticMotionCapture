@@ -2,8 +2,6 @@
     "name": "HolisticMotionCapture.Runtime",
     "rootNamespace": "",
     "references": [
-        "GUID:b97ad341f54c71b499afc79c05bc428c",
-        "GUID:3da4836269f54a14fae4f2dc4d8a73ae",
         "GUID:05dd262a0c0a2f841b8252c8c3815582"
     ],
     "includePlatforms": [],

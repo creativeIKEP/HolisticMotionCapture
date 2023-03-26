@@ -18,9 +18,6 @@
     "Mediapipe",
     "Holistic"
   ],
-  "dependencies": {
-    "jp.ikep.mediapipe.holistic": "1.1.0"
-  },
   "license": "Apache-2.0",
   "repository": "github:creativeIKEP/HolisticMotionCapture"
 }

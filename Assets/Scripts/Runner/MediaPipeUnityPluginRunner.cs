@@ -1,19 +1,15 @@
-using System;
+using System; 
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UniRx;
 using Mediapipe;
 using Mediapipe.Unity;
+using HolisticMotionCapture;
 
-public class MediaPipeRunner : IDisposable
+public class MediaPipeUnityPluginRunner : IMediaPipeRunner
 {
-    public NormalizedLandmarkList poseLandmarks { get; private set; }
-    public LandmarkList poseWorldLandmarks { get; private set; }
-    public NormalizedLandmarkList faceLandmarks { get; private set; }
-    public NormalizedLandmarkList leftHandLandmarks { get; private set; }
-    public NormalizedLandmarkList rightHandLandmarks { get; private set; }
-
     private bool _isSetup;
     CompositeDisposable _disposables = new CompositeDisposable();
     private int _inputWidth;
@@ -24,6 +20,12 @@ public class MediaPipeRunner : IDisposable
     private ResourceManager _resourceManager;
     private Stopwatch _stopwatch;
     private CalculatorGraph _graph;
+
+    private NormalizedLandmarkList poseLandmarks;
+    private LandmarkList poseWorldLandmarks;
+    private NormalizedLandmarkList faceLandmarks;
+    private NormalizedLandmarkList leftHandLandmarks;
+    private NormalizedLandmarkList rightHandLandmarks;
 
     private OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList> _poseLandmarksStream;
     private OutputStream<LandmarkListPacket, LandmarkList> _poseWorldLandmarksStream;
@@ -44,7 +46,45 @@ public class MediaPipeRunner : IDisposable
     private const string _graphLeftHandLandmarksStreamName = "left_hand_landmarks";
     private const string _graphRightHandLandmarksStreamName = "right_hand_landmarks";
 
-    public MediaPipeRunner(bool isMirror)
+    // OuterCorner => Lower => InnerCorner => Upper => OuterCorner
+    private Dictionary<int, int> leftEyeIndexToFaceLandmarkIndexMap = new Dictionary<int, int>(){
+        {0, 263},
+        {1, 249},
+        {2, 390},
+        {3, 373},
+        {4, 374},
+        {5, 380},
+        {6, 381},
+        {7, 382},
+        {8, 362},
+        {9, 398},
+        {10, 384},
+        {11, 385},
+        {12, 386},
+        {13, 387},
+        {14, 388},
+        {15, 466},
+    };
+    private Dictionary<int, int> rightEyeIndexToFaceLandmarkIndexMap = new Dictionary<int, int>(){
+        {0, 33},
+        {1, 7},
+        {2, 163},
+        {3, 144},
+        {4, 145},
+        {5, 153},
+        {6, 154},
+        {7, 155},
+        {8, 133},
+        {9, 173},
+        {10, 157},
+        {11, 158},
+        {12, 159},
+        {13, 160},
+        {14, 161},
+        {15, 246},
+    };
+
+    public MediaPipeUnityPluginRunner(bool isMirror)
     {
         _isSetup = false;
         Observable.FromCoroutine(_ => SetUp(isMirror)).Subscribe(_ => { }, () => { _isSetup = true; }).AddTo(_disposables);
@@ -93,7 +133,7 @@ public class MediaPipeRunner : IDisposable
         }
     }
 
-    public void ProcessImage(Texture inputTexture)
+    public void ProcessImage(Texture inputTexture, HolisticMocapType _)
     {
         if (!_isSetup) return;
 
@@ -134,6 +174,71 @@ public class MediaPipeRunner : IDisposable
         var imageFrame = new ImageFrame(ImageFormat.Types.Format.Srgba, _inputWidth, _inputHeight, _inputWidth * 4, _inputTexture.GetRawTextureData<byte>());
         var currentTimestamp = _stopwatch.ElapsedTicks / (System.TimeSpan.TicksPerMillisecond / 1000);
         _graph.AddPacketToInputStream(_graphInpustStreamName, new ImageFramePacket(imageFrame, new Timestamp(currentTimestamp))).AssertOk();
+    }
+
+    public Vector4 GetPoseLandmark(int index){
+        if(poseLandmarks == null) return Vector4.zero;
+
+        var l = poseLandmarks.Landmark[index];
+        return new Vector4(-l.X, -l.Y, -l.Z, l.Visibility);
+    }
+
+    public Vector4 GetPoseWorldLandmark(int index){
+        if(poseWorldLandmarks == null) return Vector4.zero;
+        var l = poseWorldLandmarks.Landmark[index];
+        return new Vector4(-l.X, -l.Y, -l.Z, l.Visibility);
+    }
+
+    public Vector3 GetFaceLandmark(int index){
+        if(faceLandmarks == null) return Vector3.zero;
+        var l = faceLandmarks.Landmark[index];
+        return new Vector3(l.X, -l.Y, l.Z);
+    }
+
+    // index is must be [0, 15]
+    public Vector3 GetLeftEyeLandmark(int index){
+        if(faceLandmarks == null) return Vector3.zero;
+        var i = leftEyeIndexToFaceLandmarkIndexMap[index];
+        var l = faceLandmarks.Landmark[i];
+        return new Vector3(l.X, -l.Y, l.Z);
+    }
+
+    // index is must be [0, 15]
+    public Vector3 GetRightEyeLandmark(int index){
+        if(faceLandmarks == null) return Vector3.zero;
+        var i = rightEyeIndexToFaceLandmarkIndexMap[index];
+        var l = faceLandmarks.Landmark[i];
+        return new Vector3(l.X, -l.Y, l.Z);
+    }
+
+    // index is must be [0, 4]
+    public Vector3 GetLeftIrisLandmark(int index){
+        if(faceLandmarks == null) return Vector3.zero;
+
+        // MediaPipeUnityPluginは、face: 468, LeftIris: 5, rightIris: 5の順番
+        var l = faceLandmarks.Landmark[index + 468];
+        return new Vector3(l.X, -l.Y, l.Z);
+    }
+
+    // index is must be [0, 4]
+    public Vector3 GetRightIrisLandmark(int index){
+        if(faceLandmarks == null) return Vector3.zero;
+
+        // MediaPipeUnityPluginは、face: 468, LeftIris: 5, rightIris: 5の順番
+        var l = faceLandmarks.Landmark[index + 468 + 5];
+        return new Vector3(l.X, -l.Y, l.Z);
+    }
+
+    public Vector3 GetLeftHandLandmark(int index){
+        if(leftHandLandmarks == null) return Vector3.zero;
+        var l = leftHandLandmarks.Landmark[index];
+        return new Vector4(-l.X, -l.Y, -l.Z);
+    }
+
+    public Vector3 GetRightHandLandmark(int index){
+        if(rightHandLandmarks == null) return Vector3.zero;
+        var l = rightHandLandmarks.Landmark[index];
+        return new Vector4(-l.X, -l.Y, -l.Z);
     }
 
     private IEnumerator SetUp(bool isMirror)

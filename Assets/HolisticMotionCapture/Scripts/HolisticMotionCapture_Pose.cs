@@ -245,14 +245,7 @@ namespace HolisticMotionCapture
 
         Vector4 RotatePoseLandmark(int index)
         {
-            if (holisticPipeline.poseWorldLandmarks == null)
-            {
-                return Vector4.zero;
-            }
-
-            // var landmark = holisticPipeline.GetPoseWorldLandmark(index);
-            var l = holisticPipeline.poseWorldLandmarks.Landmark[index];
-            var landmark = new Vector4(l.X, -l.Y, l.Z, l.Visibility);
+            var landmark = mediapipeRunner.GetPoseWorldLandmark(index);
 
             // Low pass Filter
             var buffer = lpfedPoseBuffers[index];
@@ -268,7 +261,7 @@ namespace HolisticMotionCapture
                 lpfedPoseBuffers[index] = new Tuple<int, Vector4>(poseCounter, landmark);
             }
 
-            return new Vector4(-landmark.x, landmark.y, -landmark.z, landmark.w);
+            return landmark;
         }
     }
 }

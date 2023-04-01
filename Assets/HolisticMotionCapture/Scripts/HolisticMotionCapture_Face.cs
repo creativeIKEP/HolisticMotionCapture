@@ -129,14 +129,7 @@ namespace HolisticMotionCapture
 
         Vector4 FaceLandmark(int index)
         {
-            if (holisticPipeline.faceLandmarks == null)
-            {
-                return Vector4.zero;
-            }
-
-            // var landmark = holisticPipeline.GetFaceLandmark(index);
-            var l = holisticPipeline.faceLandmarks.Landmark[index];
-            var landmark = new Vector4(l.X, -l.Y, l.Z, 1);
+            var landmark = mediapipeRunner.GetFaceLandmark(index);
 
             // Low pass Filter
             var buffer = lpfedFaceBuffers[index];
@@ -146,9 +139,7 @@ namespace HolisticMotionCapture
             }
             else
             {
-                var score = landmark.w;
                 landmark = face_lpfs[index].Filter(landmark, Time.deltaTime);
-                landmark.w = score;
                 lpfedFaceBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
             }
 
@@ -157,28 +148,52 @@ namespace HolisticMotionCapture
 
         Vector4 EyeLandmark(int index, bool isLeft)
         {
-            return Vector4.zero;
-            // MediaPipeUnityPluginは、face: 468, LeftEye: 5, rightEye: 5の順番
+            var l = isLeft ? mediapipeRunner.GetLeftEyeLandmark(index) : mediapipeRunner.GetRightEyeLandmark(index);
+            var landmark = new Vector4(l.x, l.y, l.z, 1);
 
-            // var landmark = isLeft ? holisticPipeline.GetLeftEyeLandmark(index) : holisticPipeline.GetRightEyeLandmark(index);
+            var lpfIndex = index + 5;
 
-            // // Low pass Filter
-            // var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
-            // if (buffer.Item1 == faceCounter)
-            // {
-            //     landmark = buffer.Item2;
-            // }
-            // else
-            // {
-            //     var score = landmark.w;
-            //     var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
-            //     landmark = filter.Filter(landmark, Time.deltaTime);
-            //     landmark.w = score;
-            //     if (isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
-            //     else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
-            // }
+            // Low pass Filter
+            var buffer = isLeft ? lpfedLeftEyeBuffers[lpfIndex] : lpfedRightEyeBuffers[lpfIndex];
+            if (buffer.Item1 == faceCounter)
+            {
+                landmark = buffer.Item2;
+            }
+            else
+            {
+                var score = landmark.w;
+                var filter = isLeft ? leftEye_lpfs[lpfIndex] : rightEye_lpfs[lpfIndex];
+                landmark = filter.Filter(landmark, Time.deltaTime);
+                landmark.w = score;
+                if (isLeft) lpfedLeftEyeBuffers[lpfIndex] = new Tuple<int, Vector4>(faceCounter, landmark);
+                else lpfedRightEyeBuffers[lpfIndex] = new Tuple<int, Vector4>(faceCounter, landmark);
+            }
 
-            // return landmark;
+            return landmark;
+        }
+
+        Vector4 IrisLandmark(int index, bool isLeft)
+        {
+            var l = isLeft ? mediapipeRunner.GetLeftIrisLandmark(index) : mediapipeRunner.GetRightIrisLandmark(index);
+            var landmark = new Vector4(l.x, l.y, l.z, 1);
+
+            // Low pass Filter
+            var buffer = isLeft ? lpfedLeftEyeBuffers[index] : lpfedRightEyeBuffers[index];
+            if (buffer.Item1 == faceCounter)
+            {
+                landmark = buffer.Item2;
+            }
+            else
+            {
+                var score = landmark.w;
+                var filter = isLeft ? leftEye_lpfs[index] : rightEye_lpfs[index];
+                landmark = filter.Filter(landmark, Time.deltaTime);
+                landmark.w = score;
+                if (isLeft) lpfedLeftEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+                else lpfedRightEyeBuffers[index] = new Tuple<int, Vector4>(faceCounter, landmark);
+            }
+
+            return landmark;
         }
 
         void BlinkRender()
@@ -234,12 +249,12 @@ namespace HolisticMotionCapture
 
         float CalculateEar(bool isLeft)
         {
-            var eyeOuterCorner = EyeLandmark(5, isLeft);
-            var eyeInnerCorner = EyeLandmark(13, isLeft);
-            var eyeOuterUpperLid = EyeLandmark(16, isLeft);
-            var eyeOuterLowerLid = EyeLandmark(8, isLeft);
-            var eyeInnerUpperLid = EyeLandmark(18, isLeft);
-            var eyeInnerLowerLid = EyeLandmark(10, isLeft);
+            var eyeOuterCorner = EyeLandmark(0, isLeft);
+            var eyeInnerCorner = EyeLandmark(8, isLeft);
+            var eyeOuterUpperLid = EyeLandmark(13, isLeft);
+            var eyeOuterLowerLid = EyeLandmark(3, isLeft);
+            var eyeInnerUpperLid = EyeLandmark(11, isLeft);
+            var eyeInnerLowerLid = EyeLandmark(5, isLeft);
 
             var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
             if (eyeWidth < 1e-10)
@@ -283,14 +298,14 @@ namespace HolisticMotionCapture
 
         Vector2 CalculatePupil(bool isLeft)
         {
-            var eyeOuterCorner = EyeLandmark(5, isLeft);
-            var eyeInnerCorner = EyeLandmark(13, isLeft);
-            var eyeMidUpper = EyeLandmark(17, isLeft);
-            var eyeMidLower = EyeLandmark(9, isLeft);
+            var eyeOuterCorner = EyeLandmark(0, isLeft);
+            var eyeInnerCorner = EyeLandmark(8, isLeft);
+            var eyeMidUpper = EyeLandmark(12, isLeft);
+            var eyeMidLower = EyeLandmark(4, isLeft);
             var eyeWidth = Vector2.Distance(eyeOuterCorner, eyeInnerCorner);
             var eyeHeight = Vector2.Distance(eyeMidUpper, eyeMidLower);
             var eyeMidPoint = (eyeOuterCorner + eyeInnerCorner) * 0.5f;
-            var pupil = EyeLandmark(0, isLeft);
+            var pupil = IrisLandmark(0, isLeft);
 
             var dx = eyeMidPoint.x - pupil.x;
             var dy = eyeMidPoint.y - pupil.y;

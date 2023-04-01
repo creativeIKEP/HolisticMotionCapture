@@ -92,11 +92,9 @@ namespace HolisticMotionCapture
                 return;
             }
 
-            if (holisticPipeline.poseLandmarks == null) return;
-
             var wrist = isLeft ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             int offset = isLeft ? 0 : 15;
-            var wristScore = holisticPipeline.poseLandmarks.Landmark[BoneToHolisticIndex.PoseTable[wrist]].Visibility;
+            var wristScore = mediapipeRunner.GetPoseLandmark(BoneToHolisticIndex.PoseTable[wrist]).w;
             if (wristScore < scoreThreshold)
             {
                 ResetHand(isLeft, lerpPercentage);
@@ -170,19 +168,8 @@ namespace HolisticMotionCapture
 
         Vector4 RotateHandLandmark(int index, bool isLeft)
         {
-            if (isLeft && holisticPipeline.leftHandLandmarks == null)
-            {
-                return Vector4.zero;
-            }
-            if (!isLeft && holisticPipeline.rightHandLandmarks == null)
-            {
-                return Vector4.zero;
-            }
-
-            // var landmark = isLeft ? holisticPipeline.GetLeftHandLandmark(index) : holisticPipeline.GetRightHandLandmark(index);
-            var l = isLeft ? holisticPipeline.leftHandLandmarks.Landmark[index] : holisticPipeline.rightHandLandmarks.Landmark[index];
-            var landmark = new Vector4(l.X, -l.Y, l.Z, 1);
-            return new Vector4(-landmark.x, landmark.y, -landmark.z, landmark.w);
+            var landmark = isLeft ? mediapipeRunner.GetLeftHandLandmark(index) : mediapipeRunner.GetRightHandLandmark(index);
+            return landmark;
         }
     }
 }

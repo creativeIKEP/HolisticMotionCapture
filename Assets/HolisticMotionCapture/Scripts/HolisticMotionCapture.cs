@@ -4,11 +4,11 @@ namespace HolisticMotionCapture
 {
     public partial class HolisticMotionCapturePipeline : System.IDisposable
     {
-        MediaPipeRunner _holisticPipeline;
-        public MediaPipeRunner holisticPipeline
+        IMediaPipeRunner _mediapipeRunner;
+        public IMediaPipeRunner mediapipeRunner
         {
-            get { return this._holisticPipeline; }
-            private set { this._holisticPipeline = value; }
+            get { return this._mediapipeRunner; }
+            private set { this._mediapipeRunner = value; }
         }
 
         Animator avatar;
@@ -18,7 +18,8 @@ namespace HolisticMotionCapture
         public HolisticMotionCapturePipeline(Animator avatarAnimator)
         {
             avatar = avatarAnimator;
-            holisticPipeline = new MediaPipeRunner(false);
+            mediapipeRunner = new MediaPipeUnityPluginRunner(false);
+            // mediapipeRunner = new HolisticBarracudaRunner(false);
             HandInit();
             PoseInit();
             FaceInit();
@@ -26,7 +27,7 @@ namespace HolisticMotionCapture
 
         public void Dispose()
         {
-            holisticPipeline.Dispose();
+            mediapipeRunner.Dispose();
         }
 
         public void AvatarPoseRender(
@@ -37,10 +38,7 @@ namespace HolisticMotionCapture
             float faceScoreThreshold = 0.5f,
             bool isUpperBodyOnly = false,
             float lerpPercentage = 0.3f,
-            HolisticMocapType mocapType = HolisticMocapType.full,
-            // BlazePoseModel blazePoseModel = BlazePoseModel.full,
-            float poseDetectionThreshold = 0.75f,
-            float poseDetectionIouThreshold = 0.3f)
+            HolisticMocapType mocapType = HolisticMocapType.full)
         {
             float nowTime = Time.time;
             if (nowTime - lastPoseUpdateTime < 1.0f / maxFps)
@@ -49,8 +47,7 @@ namespace HolisticMotionCapture
             }
             lastPoseUpdateTime = nowTime;
 
-            // holisticPipeline.ProcessImage(inputTexture, (HolisticInferenceType)mocapType, blazePoseModel, poseDetectionThreshold, poseDetectionIouThreshold);
-            holisticPipeline.ProcessImage(inputTexture);
+            mediapipeRunner.ProcessImage(inputTexture, mocapType);
             PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
             HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
             HandRender(mocapType, false, handScoreThreshold, lerpPercentage);

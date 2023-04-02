@@ -4,8 +4,8 @@ namespace HolisticMotionCapture
 {
     public partial class HolisticMotionCapturePipeline : System.IDisposable
     {
-        IMediaPipeRunner _mediapipeRunner;
-        public IMediaPipeRunner mediapipeRunner
+        MediaPipeRunnerBase _mediapipeRunner;
+        public MediaPipeRunnerBase mediapipeRunner
         {
             get { return this._mediapipeRunner; }
             private set { this._mediapipeRunner = value; }

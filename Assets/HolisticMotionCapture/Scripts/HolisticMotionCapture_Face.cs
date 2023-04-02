@@ -36,7 +36,7 @@ namespace HolisticMotionCapture
 
             face_lpfs = new List<LowPassFilter>();
             lpfedFaceBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < 468; i++)
+            for (int i = 0; i < MediaPipeRunnerBase.faceVertexCount; i++)
             {
                 face_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedFaceBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -44,7 +44,7 @@ namespace HolisticMotionCapture
 
             leftEye_lpfs = new List<LowPassFilter>();
             lpfedLeftEyeBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < 76; i++)
+            for (int i = 0; i < MediaPipeRunnerBase.eyeVertexCount + MediaPipeRunnerBase.irisVertexCount; i++)
             {
                 leftEye_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedLeftEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -52,7 +52,7 @@ namespace HolisticMotionCapture
 
             rightEye_lpfs = new List<LowPassFilter>();
             lpfedRightEyeBuffers = new List<Tuple<int, Vector4>>();
-            for (int i = 0; i < 76; i++)
+            for (int i = 0; i < MediaPipeRunnerBase.eyeVertexCount + MediaPipeRunnerBase.irisVertexCount; i++)
             {
                 rightEye_lpfs.Add(new LowPassFilter(2, 1.5f));
                 lpfedRightEyeBuffers.Add(new Tuple<int, Vector4>(0, Vector4.zero));
@@ -107,11 +107,6 @@ namespace HolisticMotionCapture
                 return;
             }
 
-            // if (holisticPipeline.faceDetectionScore < faceScoreThreshold)
-            // {
-            //     return;
-            // }
-
             BlinkRender();
             if (lookTargetWorldPosition != null)
             {
@@ -151,7 +146,7 @@ namespace HolisticMotionCapture
             var l = isLeft ? mediapipeRunner.GetLeftEyeLandmark(index) : mediapipeRunner.GetRightEyeLandmark(index);
             var landmark = new Vector4(l.x, l.y, l.z, 1);
 
-            var lpfIndex = index + 5;
+            var lpfIndex = index + MediaPipeRunnerBase.irisVertexCount;
 
             // Low pass Filter
             var buffer = isLeft ? lpfedLeftEyeBuffers[lpfIndex] : lpfedRightEyeBuffers[lpfIndex];

@@ -1,4 +1,4 @@
-using System; 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +8,7 @@ using Mediapipe;
 using Mediapipe.Unity;
 using HolisticMotionCapture;
 
-public class MediaPipeUnityPluginRunner : IMediaPipeRunner
+public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
 {
     private bool _isSetup;
     CompositeDisposable _disposables = new CompositeDisposable();
@@ -90,7 +90,7 @@ public class MediaPipeUnityPluginRunner : IMediaPipeRunner
         Observable.FromCoroutine(_ => SetUp(isMirror)).Subscribe(_ => { }, () => { _isSetup = true; }).AddTo(_disposables);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         _disposables.Dispose();
 
@@ -133,7 +133,7 @@ public class MediaPipeUnityPluginRunner : IMediaPipeRunner
         }
     }
 
-    public void ProcessImage(Texture inputTexture, HolisticMocapType _)
+    public override void ProcessImage(Texture inputTexture, HolisticMocapType _)
     {
         if (!_isSetup) return;
 
@@ -176,67 +176,76 @@ public class MediaPipeUnityPluginRunner : IMediaPipeRunner
         _graph.AddPacketToInputStream(_graphInpustStreamName, new ImageFramePacket(imageFrame, new Timestamp(currentTimestamp))).AssertOk();
     }
 
-    public Vector4 GetPoseLandmark(int index){
-        if(poseLandmarks == null) return Vector4.zero;
+    public override Vector4 GetPoseLandmark(int index)
+    {
+        if (poseLandmarks == null) return Vector4.zero;
 
         var l = poseLandmarks.Landmark[index];
         return new Vector4(-l.X, -l.Y, -l.Z, l.Visibility);
     }
 
-    public Vector4 GetPoseWorldLandmark(int index){
-        if(poseWorldLandmarks == null) return Vector4.zero;
+    public override Vector4 GetPoseWorldLandmark(int index)
+    {
+        if (poseWorldLandmarks == null) return Vector4.zero;
         var l = poseWorldLandmarks.Landmark[index];
         return new Vector4(-l.X, -l.Y, -l.Z, l.Visibility);
     }
 
-    public Vector3 GetFaceLandmark(int index){
-        if(faceLandmarks == null) return Vector3.zero;
+    public override Vector3 GetFaceLandmark(int index)
+    {
+        if (faceLandmarks == null) return Vector3.zero;
         var l = faceLandmarks.Landmark[index];
         return new Vector3(l.X, -l.Y, l.Z);
     }
 
     // index is must be [0, 15]
-    public Vector3 GetLeftEyeLandmark(int index){
-        if(faceLandmarks == null) return Vector3.zero;
+    public override Vector3 GetLeftEyeLandmark(int index)
+    {
+        if (faceLandmarks == null) return Vector3.zero;
         var i = leftEyeIndexToFaceLandmarkIndexMap[index];
         var l = faceLandmarks.Landmark[i];
         return new Vector3(l.X, -l.Y, l.Z);
     }
 
     // index is must be [0, 15]
-    public Vector3 GetRightEyeLandmark(int index){
-        if(faceLandmarks == null) return Vector3.zero;
+    public override Vector3 GetRightEyeLandmark(int index)
+    {
+        if (faceLandmarks == null) return Vector3.zero;
         var i = rightEyeIndexToFaceLandmarkIndexMap[index];
         var l = faceLandmarks.Landmark[i];
         return new Vector3(l.X, -l.Y, l.Z);
     }
 
     // index is must be [0, 4]
-    public Vector3 GetLeftIrisLandmark(int index){
-        if(faceLandmarks == null) return Vector3.zero;
+    public override Vector3 GetLeftIrisLandmark(int index)
+    {
+        if (faceLandmarks == null) return Vector3.zero;
 
         // MediaPipeUnityPluginは、face: 468, LeftIris: 5, rightIris: 5の順番
-        var l = faceLandmarks.Landmark[index + 468];
+        var l = faceLandmarks.Landmark[index + faceVertexCount];
         return new Vector3(l.X, -l.Y, l.Z);
     }
 
     // index is must be [0, 4]
-    public Vector3 GetRightIrisLandmark(int index){
-        if(faceLandmarks == null) return Vector3.zero;
+    public override Vector3 GetRightIrisLandmark(int index)
+    {
+        if (faceLandmarks == null) return Vector3.zero;
 
         // MediaPipeUnityPluginは、face: 468, LeftIris: 5, rightIris: 5の順番
-        var l = faceLandmarks.Landmark[index + 468 + 5];
+        var l = faceLandmarks.Landmark[index + faceVertexCount + irisVertexCount];
         return new Vector3(l.X, -l.Y, l.Z);
     }
 
-    public Vector3 GetLeftHandLandmark(int index){
-        if(leftHandLandmarks == null) return Vector3.zero;
+    public override Vector3 GetLeftHandLandmark(int index)
+    {
+        if (leftHandLandmarks == null) return Vector3.zero;
         var l = leftHandLandmarks.Landmark[index];
         return new Vector4(-l.X, -l.Y, -l.Z);
     }
 
-    public Vector3 GetRightHandLandmark(int index){
-        if(rightHandLandmarks == null) return Vector3.zero;
+    public override Vector3 GetRightHandLandmark(int index)
+    {
+        if (rightHandLandmarks == null) return Vector3.zero;
         var l = rightHandLandmarks.Landmark[index];
         return new Vector4(-l.X, -l.Y, -l.Z);
     }

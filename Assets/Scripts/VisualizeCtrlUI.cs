@@ -23,6 +23,7 @@ public class VisualizeCtrlUI : MonoBehaviour
     [SerializeField] Dropdown hmcTypeSelect;
     [SerializeField] Toggle isUpperBodyOnlyToggle;
     [SerializeField] Toggle lookCameraToggle;
+    [SerializeField] Dropdown workTypeSelect;
 
     readonly string loadedVrmsPath = "/VrmFiles";
     string defaultVrmPath;
@@ -85,6 +86,8 @@ public class VisualizeCtrlUI : MonoBehaviour
                 break;
             }
         }
+
+        InitWorkTypeDropdown();
     }
 
     void OnDestroy()
@@ -147,6 +150,26 @@ public class VisualizeCtrlUI : MonoBehaviour
         {
             var selectedType = (HolisticMocapType)Enum.ToObject(typeof(HolisticMocapType), selectValue);
             visuallizer.SetHolisticMocapType(selectedType);
+        });
+    }
+
+    void InitWorkTypeDropdown()
+    {
+        var typeList = Enum.GetNames(typeof(HolisticMotionCaptureWorkType));
+        var selectOptions = new List<string>();
+        foreach (var type in typeList)
+        {
+            selectOptions.Add(type);
+        }
+        workTypeSelect.ClearOptions();
+        workTypeSelect.AddOptions(selectOptions);
+
+        var selectedType = (HolisticMotionCaptureWorkType)Enum.ToObject(typeof(HolisticMotionCaptureWorkType), workTypeSelect.value);
+        visuallizer.SetWorkType(selectedType);
+        workTypeSelect.onValueChanged.AddListener(selectValue =>
+        {
+            var selectedType = (HolisticMotionCaptureWorkType)Enum.ToObject(typeof(HolisticMotionCaptureWorkType), selectValue);
+            visuallizer.SetWorkType(selectedType);
         });
     }
 

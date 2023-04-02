@@ -1,5 +1,11 @@
 using UnityEngine;
 
+public enum HolisticMotionCaptureWorkType
+{
+    CPU,
+    GPU
+}
+
 public partial class HolisticMotionCapturePipeline : System.IDisposable
 {
     MediaPipeRunnerBase _mediapipeRunner;
@@ -12,12 +18,20 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
     Animator avatar;
     const float maxFps = 30.0f;
     float lastPoseUpdateTime;
+    HolisticMotionCaptureWorkType _workType;
 
-    public HolisticMotionCapturePipeline(Animator avatarAnimator)
+    public HolisticMotionCapturePipeline(Animator avatarAnimator, HolisticMotionCaptureWorkType workType = HolisticMotionCaptureWorkType.CPU)
     {
         avatar = avatarAnimator;
-        mediapipeRunner = new MediaPipeUnityPluginRunner();
-        // mediapipeRunner = new HolisticBarracudaRunner();
+        _workType = workType;
+        if (workType == HolisticMotionCaptureWorkType.CPU)
+        {
+            mediapipeRunner = new MediaPipeUnityPluginRunner();
+        }
+        else
+        {
+            mediapipeRunner = new HolisticBarracudaRunner();
+        }
         HandInit();
         PoseInit();
         FaceInit();
@@ -26,6 +40,20 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
     public void Dispose()
     {
         mediapipeRunner.Dispose();
+    }
+
+    public void ChangeWorkType(HolisticMotionCaptureWorkType type)
+    {
+        _workType = type;
+        Dispose();
+        if (type == HolisticMotionCaptureWorkType.CPU)
+        {
+            mediapipeRunner = new MediaPipeUnityPluginRunner();
+        }
+        else
+        {
+            mediapipeRunner = new HolisticBarracudaRunner();
+        }
     }
 
     public void AvatarPoseRender(

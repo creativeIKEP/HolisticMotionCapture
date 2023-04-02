@@ -4,7 +4,7 @@ using Mediapipe.BlazePose;
 
 public class HolisticBarracudaRunner : MediaPipeRunnerBase
 {
-    private HolisticPipeline holisticPipeline;
+    public HolisticPipeline holisticPipeline { get; private set; }
 
     public HolisticBarracudaRunner(BlazePoseModel blazePoseModel = BlazePoseModel.full)
     {

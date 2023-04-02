@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5105739270100195973}
   - component: {fileID: 5105739270100195972}
   - component: {fileID: 5105739270100195704}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Point Annotation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -108,5 +108,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0476f607871e33f2783b582f7a75703c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: 0, g: 1, b: 0, a: 1}
-  radius: 15
+  _color: {r: 0, g: 1, b: 0, a: 1}
+  _radius: 15

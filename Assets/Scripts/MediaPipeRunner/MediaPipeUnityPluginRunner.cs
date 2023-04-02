@@ -9,6 +9,12 @@ using Mediapipe.Unity;
 
 public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
 {
+    public NormalizedLandmarkList poseLandmarks { get; private set; }
+    public LandmarkList poseWorldLandmarks { get; private set; }
+    public NormalizedLandmarkList faceLandmarks { get; private set; }
+    public NormalizedLandmarkList leftHandLandmarks { get; private set; }
+    public NormalizedLandmarkList rightHandLandmarks { get; private set; }
+
     private bool _isSetup;
     CompositeDisposable _disposables = new CompositeDisposable();
     private int _inputWidth;
@@ -16,15 +22,9 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
     private Texture2D _inputTexture;
     private RenderTexture _rtForInput;
 
-    private ResourceManager _resourceManager;
+    private static ResourceManager _resourceManager;
     private Stopwatch _stopwatch;
     private CalculatorGraph _graph;
-
-    private NormalizedLandmarkList poseLandmarks;
-    private LandmarkList poseWorldLandmarks;
-    private NormalizedLandmarkList faceLandmarks;
-    private NormalizedLandmarkList leftHandLandmarks;
-    private NormalizedLandmarkList rightHandLandmarks;
 
     private OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList> _poseLandmarksStream;
     private OutputStream<LandmarkListPacket, LandmarkList> _poseWorldLandmarksStream;
@@ -251,14 +251,17 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
 
     private IEnumerator SetUp()
     {
-        _resourceManager = new StreamingAssetsResourceManager("MediaPipeUnityPluginModels");
-        yield return _resourceManager.PrepareAssetAsync("pose_detection.bytes");
-        yield return _resourceManager.PrepareAssetAsync("pose_landmark_full.bytes");
-        yield return _resourceManager.PrepareAssetAsync("face_detection_short_range.bytes");
-        yield return _resourceManager.PrepareAssetAsync("face_landmark_with_attention.bytes");
-        yield return _resourceManager.PrepareAssetAsync("hand_recrop.bytes");
-        yield return _resourceManager.PrepareAssetAsync("hand_landmark_full.bytes");
-        yield return _resourceManager.PrepareAssetAsync("handedness.txt");
+        if (_resourceManager == null)
+        {
+            _resourceManager = new StreamingAssetsResourceManager("MediaPipeUnityPluginModels");
+            yield return _resourceManager.PrepareAssetAsync("pose_detection.bytes");
+            yield return _resourceManager.PrepareAssetAsync("pose_landmark_full.bytes");
+            yield return _resourceManager.PrepareAssetAsync("face_detection_short_range.bytes");
+            yield return _resourceManager.PrepareAssetAsync("face_landmark_with_attention.bytes");
+            yield return _resourceManager.PrepareAssetAsync("hand_recrop.bytes");
+            yield return _resourceManager.PrepareAssetAsync("hand_landmark_full.bytes");
+            yield return _resourceManager.PrepareAssetAsync("handedness.txt");
+        }
 
         var graphTextAsset = Resources.Load(_graphTextAssetName) as TextAsset;
         _graph = new CalculatorGraph(graphTextAsset.text);

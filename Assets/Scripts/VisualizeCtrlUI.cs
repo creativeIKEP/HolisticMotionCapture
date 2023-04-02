@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
-using HolisticMotionCapture;
 using SFB;
 using VRM;
 #if UNITY_STANDALONE_OSX

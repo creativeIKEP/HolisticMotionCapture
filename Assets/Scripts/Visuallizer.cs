@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
-using HolisticMotionCapture;
 
 public class Visuallizer : MonoBehaviour
 {

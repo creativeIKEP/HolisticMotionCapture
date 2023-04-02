@@ -6,7 +6,6 @@ using UnityEngine;
 using UniRx;
 using Mediapipe;
 using Mediapipe.Unity;
-using HolisticMotionCapture;
 
 public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
 {
@@ -84,10 +83,10 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
         {15, 246},
     };
 
-    public MediaPipeUnityPluginRunner(bool isMirror)
+    public MediaPipeUnityPluginRunner()
     {
         _isSetup = false;
-        Observable.FromCoroutine(_ => SetUp(isMirror)).Subscribe(_ => { }, () => { _isSetup = true; }).AddTo(_disposables);
+        Observable.FromCoroutine(SetUp).Subscribe(_ => { }, () => { _isSetup = true; }).AddTo(_disposables);
     }
 
     public override void Dispose()
@@ -250,7 +249,7 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
         return new Vector4(-l.X, -l.Y, -l.Z);
     }
 
-    private IEnumerator SetUp(bool isMirror)
+    private IEnumerator SetUp()
     {
         _resourceManager = new StreamingAssetsResourceManager("MediaPipeUnityPluginModels");
         yield return _resourceManager.PrepareAssetAsync("pose_detection.bytes");
@@ -267,7 +266,7 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
         var sidePacket = new SidePacket();
         sidePacket.Emplace(_graphInputRotationSidePacketName, new IntPacket(0));
         sidePacket.Emplace(_graphInputVerticallyFlippedSidePacketName, new BoolPacket(true));
-        sidePacket.Emplace(_graphInputHorizontallyFlippedSidePacketName, new BoolPacket(isMirror));
+        sidePacket.Emplace(_graphInputHorizontallyFlippedSidePacketName, new BoolPacket(false));
         sidePacket.Emplace(_graphRefineFaceLandmarksSidePacketName, new BoolPacket(true));
 
         _poseLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, _graphPoseLandmarksStreamName);

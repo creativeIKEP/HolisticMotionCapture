@@ -1,15 +1,13 @@
 using UnityEngine;
 using MediaPipe.Holistic;
 using Mediapipe.BlazePose;
-using HolisticMotionCapture;
 
 public class HolisticBarracudaRunner : MediaPipeRunnerBase
 {
     private HolisticPipeline holisticPipeline;
 
-    public HolisticBarracudaRunner(bool isMirror, BlazePoseModel blazePoseModel = BlazePoseModel.full)
+    public HolisticBarracudaRunner(BlazePoseModel blazePoseModel = BlazePoseModel.full)
     {
-        // TODO: use isMirror
         holisticPipeline = new HolisticPipeline(blazePoseModel);
     }
 

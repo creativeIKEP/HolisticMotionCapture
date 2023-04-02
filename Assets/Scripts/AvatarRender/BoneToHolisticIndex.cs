@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HolisticMotionCapture
+public static class BoneToHolisticIndex
 {
-    public static class BoneToHolisticIndex
-    {
-        public static Dictionary<HumanBodyBones, int> PoseTable = new Dictionary<HumanBodyBones, int>(){
+    public static Dictionary<HumanBodyBones, int> PoseTable = new Dictionary<HumanBodyBones, int>(){
         // Right arm
         {HumanBodyBones.RightUpperArm, 12},
         {HumanBodyBones.RightLowerArm, 14},
@@ -29,7 +27,7 @@ namespace HolisticMotionCapture
         {HumanBodyBones.LeftToes, 31}
     };
 
-        public static Dictionary<HumanBodyBones, int> handTable = new Dictionary<HumanBodyBones, int>(){
+    public static Dictionary<HumanBodyBones, int> handTable = new Dictionary<HumanBodyBones, int>(){
         {HumanBodyBones.LeftHand, 0},
 
         {HumanBodyBones.LeftThumbProximal, 1},
@@ -75,5 +73,4 @@ namespace HolisticMotionCapture
         {HumanBodyBones.RightLittleIntermediate, 18},
         {HumanBodyBones.RightLittleDistal, 19}
     };
-    }
 }

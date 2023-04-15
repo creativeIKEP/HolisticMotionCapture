@@ -32,6 +32,11 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
         {
             mediapipeRunner = new HolisticBarracudaRunner();
         }
+
+        // default: T pose to A pose
+        float upperArmAngle = 60;
+        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
         HandInit();
         PoseInit();
         FaceInit();
@@ -66,6 +71,11 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
         float lerpPercentage = 0.3f,
         HolisticMocapType mocapType = HolisticMocapType.full)
     {
+        PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
+        HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
+        HandRender(mocapType, false, handScoreThreshold, lerpPercentage);
+        FaceRender(mocapType, faceScoreThreshold, lookTargetWorldPosition);
+
         float nowTime = Time.time;
         if (nowTime - lastPoseUpdateTime < 1.0f / maxFps)
         {
@@ -74,10 +84,6 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
         lastPoseUpdateTime = nowTime;
 
         mediapipeRunner.ProcessImage(inputTexture, mocapType);
-        PoseRender(mocapType, poseScoreThreshold, isUpperBodyOnly, lerpPercentage);
-        HandRender(mocapType, true, handScoreThreshold, lerpPercentage);
-        HandRender(mocapType, false, handScoreThreshold, lerpPercentage);
-        FaceRender(mocapType, faceScoreThreshold, lookTargetWorldPosition);
     }
 
     public void ResetAvatar(float lerpPercentage = 0.3f)

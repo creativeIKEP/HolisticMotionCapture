@@ -1,4 +1,8 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using SFB;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,7 +21,9 @@ public class WebCamCtrlUI : MonoBehaviour
         }
     }
 
-    WebCamInput webCam;
+    private const string VideoSelectMenuName = "Input from video...";
+    
+    IMediaPipeInputSource webCam;
 
     void Start()
     {
@@ -27,16 +33,17 @@ public class WebCamCtrlUI : MonoBehaviour
         {
             if (d.name != "HolisticMotionCapture") webcamSelectOptions.Add(d.name);
         }
+        webcamSelectOptions.Add(VideoSelectMenuName);
         webcamSelect.ClearOptions();
         webcamSelect.AddOptions(webcamSelectOptions);
     }
 
-    void Update()
+    public void CaptureSwitch()
     {
-        if (webCam != null) webCam.UpdateTexture();
+        CaptureSwitchAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
-    public void CaptureSwitch()
+    private async UniTask CaptureSwitchAsync(CancellationToken token)
     {
         if (webCam != null)
         {
@@ -46,6 +53,29 @@ public class WebCamCtrlUI : MonoBehaviour
         }
 
         var webCamName = webcamSelect.options[webcamSelect.value].text;
+        if (webCamName == VideoSelectMenuName)
+        {
+            var extensions = new[]{
+                new ExtensionFilter("Video Files", "mp4"),
+            };
+            StandaloneFileBrowser.OpenFilePanelAsync("Open File", "", extensions, false, async (paths) =>
+            {
+                if (paths.Length <= 0) return;
+                var path = paths[0];
+                // cancelしても paths.Length == 1の時あり
+                if (string.IsNullOrEmpty(path)) return;
+
+                var extension = Path.GetExtension(path).ToLower();
+                if (extension != ".mp4") return;
+                
+                webCam = new VideoInput(path);
+                var videoSize = await webCam.CaptureStartAsync(token);
+                widthInput.text = videoSize.x.ToString();
+                heightInput.text = videoSize.y.ToString();
+            });
+            return;
+        }
+        
         if (string.IsNullOrEmpty(widthInput.text) || string.IsNullOrEmpty(heightInput.text))
         {
             webCam = new WebCamInput(webCamName);
@@ -56,12 +86,9 @@ public class WebCamCtrlUI : MonoBehaviour
             int h = int.Parse(heightInput.text);
             webCam = new WebCamInput(webCamName, w, h);
         }
-
-        StartCoroutine(webCam.CaptureStart((size) =>
-        {
-            widthInput.text = size.x.ToString();
-            heightInput.text = size.y.ToString();
-        }));
+        var textureSize = await webCam.CaptureStartAsync(token);
+        widthInput.text = textureSize.x.ToString();
+        heightInput.text = textureSize.y.ToString();
     }
 
     void OnApplicationQuit()

@@ -35,7 +35,8 @@ public class HolisticBarracudaRunner : MediaPipeRunnerBase
 
     public override Vector3 GetFaceLandmark(int index)
     {
-        return holisticPipeline.GetFaceLandmark(index);
+        var l = holisticPipeline.GetFaceLandmark(index);
+        return new Vector4(-l.x, l.y, -l.z, l.w);
     }
 
     // index is must be [0, 15]

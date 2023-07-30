@@ -194,7 +194,7 @@ public class MediaPipeUnityPluginRunner : MediaPipeRunnerBase
     {
         if (faceLandmarks == null) return Vector3.zero;
         var l = faceLandmarks.Landmark[index];
-        return new Vector3(l.X, -l.Y, l.Z);
+        return new Vector3(-l.X, -l.Y, -l.Z);
     }
 
     // index is must be [0, 15]

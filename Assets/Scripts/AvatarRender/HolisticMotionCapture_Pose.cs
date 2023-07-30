@@ -14,6 +14,11 @@ partial class HolisticMotionCapturePipeline
 
     void PoseInit()
     {
+        // default: T pose to A pose
+        float upperArmAngle = 60;
+        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
+        
         poseRotationLpfs = new Dictionary<HumanBodyBones, LowPassFilterQuaternion>();
 
         HumanBodyBones[] hipsToHead = new HumanBodyBones[] { HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest, HumanBodyBones.Neck, HumanBodyBones.Head };
@@ -148,22 +153,40 @@ partial class HolisticMotionCapturePipeline
         }
 
         // Rotate head with pose landmark.
-        var leftEyeLandmark = RotatePoseLandmark(2);
-        var rightEyeLandmark = RotatePoseLandmark(5);
-        var leftMouthLandmark = RotatePoseLandmark(9);
-        var rightMouthLandmark = RotatePoseLandmark(10);
-        var eyeMid = (leftEyeLandmark + rightEyeLandmark) * 0.5f;
-        var mouthMid = (leftMouthLandmark + rightMouthLandmark) * 0.5f;
-        var headScore = (eyeMid.w + mouthMid.w) * 0.5f;
-        var headForward = Vector3.Cross(eyeMid - mouthMid, leftMouthLandmark - rightMouthLandmark);
+        var headForward = Vector3.zero;
+        var headBottomToTop = Vector3.zero;
+        var headScore = 0f;
+        if (mocapType == HolisticMocapType.full || mocapType == HolisticMocapType.pose_and_face)
+        {
+            var headTop = mediapipeRunner.GetFaceLandmark(9);
+            var headBottom = mediapipeRunner.GetFaceLandmark(200);
+            var headLeft = mediapipeRunner.GetFaceLandmark(280);
+            var headRight = mediapipeRunner.GetFaceLandmark(50);
+            headBottomToTop = (headTop - headBottom).normalized;
+            headForward = Vector3.Cross(headBottomToTop, (headLeft - headRight).normalized);
+            headScore = RotatePoseLandmark(0).w;
+        }
+        else
+        {
+            var leftEyeLandmark =  RotatePoseLandmark(2);
+            var rightEyeLandmark = RotatePoseLandmark(5);
+            var leftMouthLandmark = RotatePoseLandmark(9);
+            var rightMouthLandmark = RotatePoseLandmark(10);
+            var eyeMid = (leftEyeLandmark + rightEyeLandmark) * 0.5f;
+            var mouthMid = (leftMouthLandmark + rightMouthLandmark) * 0.5f;
+            headBottomToTop = (eyeMid - mouthMid).normalized;
+            headForward = Vector3.Cross(headBottomToTop, (leftMouthLandmark - rightMouthLandmark).normalized);
+            headForward = Quaternion.Euler(-20, 0, 0) * headForward;
+            headScore = (eyeMid.w + mouthMid.w) * 0.5f;   
+        }
+        
         if (headScore > scoreThreshold)
         {
-            var headRotation = Quaternion.LookRotation(headForward, (eyeMid - mouthMid).normalized) * poseJoints[HumanBodyBones.Head].inverseRotation * poseJoints[HumanBodyBones.Head].initRotation;
+            var headRotation = Quaternion.LookRotation(headForward, headBottomToTop) * poseJoints[HumanBodyBones.Head].inverseRotation * poseJoints[HumanBodyBones.Head].initRotation;
             if (isUpperBodyOnly || (!isUpperBodyOnly && hipScore > scoreThreshold))
             {
                 var spineTransform = avatar.GetBoneTransform(HumanBodyBones.Spine);
-                var spineRotationEulerAngles = headRotation.eulerAngles;
-                var spineRotation = Quaternion.Euler(headRotation.eulerAngles + new Vector3(-20, 0, 0));
+                var spineRotation = headRotation;
 
                 poseRotationLpfs[HumanBodyBones.Spine].Add(spineRotation);
                 spineRotation = poseRotationLpfs[HumanBodyBones.Spine].Get();

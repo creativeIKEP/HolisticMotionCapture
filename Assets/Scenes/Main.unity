@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028305, g: 0.22571313, b: 0.3069213, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -8719,9 +8719,9 @@ MonoBehaviour:
   webCamInput: {fileID: 1587756040}
   image: {fileID: 381058041}
   _holisticAnnotationController: {fileID: 1010368444}
-  lerpPercentage: 0.1
+  lerpPercentage: 0.75
   poseShader: {fileID: 4800000, guid: c8fe6886e54b6b842bf572852e80b51d, type: 3}
-  humanPoseThreshold: 0.9
+  humanPoseThreshold: 0.5
   faceShader: {fileID: 4800000, guid: 7f88ef98500ae914280808663a89b160, type: 3}
   faceLineTemplateMesh: {fileID: 4300000, guid: 4d1b450bb6d281641af6c72e8b37cfcb, type: 2}
   faceScoreThreshold: 0.5

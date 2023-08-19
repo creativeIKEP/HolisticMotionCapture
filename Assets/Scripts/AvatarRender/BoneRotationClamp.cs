@@ -25,38 +25,21 @@ public static class BoneRotationClamp
         if (!isDefinition) return rotation;
 
         var localRotation = Quaternion.Inverse(targetTransform.parent.rotation) * rotation;
-        var x = localRotation.eulerAngles.x;
-        if (x > 180)
+        var result = new float[3];
+        for (var i = 0; i < result.Length; i++)
         {
-            x -= 360;
+            var x = localRotation.eulerAngles[i];
+            if (x > 180)
+            {
+                x -= 360;
+            }
+            else if (x < -180)
+            {
+                x += 360;
+            }
+            result[i] = Mathf.Min(Mathf.Max(targetMinMaxRotation.minEuler[i], x), targetMinMaxRotation.maxEuler[i]);
         }
-        else if (x < -180)
-        {
-            x += 360;
-        }
-        var y = localRotation.eulerAngles.y;
-        if (y > 180)
-        {
-            y -= 360;
-        }
-        else if (y < -180)
-        {
-            y += 360;
-        }
-        var z = localRotation.eulerAngles.z;
-        if (z > 180)
-        {
-            z -= 360;
-        }
-        else if (z < -180)
-        {
-            z += 360;
-        }
-
-        x = Mathf.Min(Mathf.Max(targetMinMaxRotation.minEuler.x, x), targetMinMaxRotation.maxEuler.x);
-        y = Mathf.Min(Mathf.Max(targetMinMaxRotation.minEuler.y, y), targetMinMaxRotation.maxEuler.y);
-        z = Mathf.Min(Mathf.Max(targetMinMaxRotation.minEuler.z, z), targetMinMaxRotation.maxEuler.z);
-        return targetTransform.parent.rotation * Quaternion.Euler(x, y, z);
+        return targetTransform.parent.rotation * Quaternion.Euler(result[0], result[1], result[2]);
     }
 }
 

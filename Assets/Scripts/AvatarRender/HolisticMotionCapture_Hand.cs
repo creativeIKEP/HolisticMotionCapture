@@ -105,7 +105,9 @@ partial class HolisticMotionCapturePipeline
         if (!isLeft) handUp *= -1;
         var handForward = Vector3.Cross(handUp, handDirection);
         if (!isLeft) handForward *= -1;
-        var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
+        var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation;
+        // If you use this, the runtime appearance will be ruined because Initialize pose is in A-pose.
+        // var wristRotation = Quaternion.LookRotation(handForward, handUp) * handJoints[wrist].inverseRotation * handJoints[wrist].initRotation;
 
         // rotate the arm because avoid the wrist will be twisted
         var lowerArmBoneTransform = avatar.GetBoneTransform(HumanBodyBones.RightLowerArm);

@@ -33,8 +33,13 @@ public partial class HolisticMotionCapturePipeline : System.IDisposable
             mediapipeRunner = new HolisticBarracudaRunner();
         }
         
-        HandInit();
+        // default: T pose to A pose
+        float upperArmAngle = 60;
+        avatar.GetBoneTransform(HumanBodyBones.LeftUpperArm).localRotation = Quaternion.Euler(0, 0, upperArmAngle);
+        avatar.GetBoneTransform(HumanBodyBones.RightUpperArm).localRotation = Quaternion.Euler(0, 0, -upperArmAngle);
+
         PoseInit();
+        HandInit();
         FaceInit();
     }
 
